@@ -2,7 +2,7 @@
 
 **Curso:** Construcción de Software II – SW707 | Universidad Nacional de Ingeniería
 **Entregable:** v1.0 (Examen Parcial)
-**Integrantes:** *Suazo Zanabria Dino, Carlos Chavez Daniel*
+**Integrantes:** *Suazo Zanabria Dino, Chavez Oliva Carlos *
 **Docente:** *Anibal Guillen*
 **Fecha:** *2026-10-10*
 **Repositorio:** *[enlace a GitHub]*
