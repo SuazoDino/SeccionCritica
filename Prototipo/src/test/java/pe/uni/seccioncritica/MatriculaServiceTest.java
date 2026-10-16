@@ -43,8 +43,8 @@ class MatriculaServiceTest {
         assertEquals(1,db.queryForObject("SELECT COUNT(*) FROM matricula WHERE seccion_id=4",Integer.class));
     }
     @Test void solicitudesDelMismoEstudianteRespetanElHorario() throws Exception {
-        assertEquals(1,competir(new long[][]{{1,1},{1,3}}));
-        assertEquals(4,service.creditos(1));
+        assertEquals(1,competir(new long[][]{{2,1},{2,3}}));
+        assertEquals(4,service.creditos(2));
     }
     @Test void solicitudesDelMismoEstudianteRespetanLosCreditos() throws Exception {
         assertEquals(1,competir(new long[][]{{2,4},{2,5}}));
@@ -56,6 +56,27 @@ class MatriculaServiceTest {
         assertEquals(1,cupos(4));
     }
     private int cupos(long id) { return db.queryForObject("SELECT cupo_disponible FROM seccion WHERE id=?",Integer.class,id); }
+    @Test void ofertaFiltraPrerrequisitosYAprobados() {
+        assertTrue(service.oferta(2).stream().noneMatch(s->s.get("codigo").equals("CC201")));
+        assertTrue(service.oferta(1).stream().noneMatch(s->s.get("codigo").equals("CC101")));
+        assertEquals(2,service.oferta(1).stream().filter(s->s.get("codigo").equals("CC201")).count());
+        assertThrows(MatriculaService.Rechazo.class,()->service.matricular(1,1));
+    }
+    @Test void crucesConTeoriaSePermiten() {
+        // Teoría de CC201 y práctica de CC301 coinciden el martes 10–12.
+        service.matricular(3,2);
+        service.matricular(3,5);
+        assertEquals(8,service.creditos(3));
+        assertEquals(4,service.agenda(3).size());
+    }
+    @Test void teoriaTeoriaSePermiteYHorariosContiguosTambien() {
+        db.update("UPDATE sesion SET inicio=720,fin=840 WHERE id=31");
+        try {
+            service.matricular(2,1);
+            service.matricular(2,3);
+            assertEquals(8,service.creditos(2));
+        } finally { db.update("UPDATE sesion SET inicio=660,fin=780 WHERE id=31"); }
+    }
     private int competir(long[][] solicitudes) throws Exception {
         try(var executor=Executors.newFixedThreadPool(solicitudes.length)) {
             var listos=new CountDownLatch(solicitudes.length);

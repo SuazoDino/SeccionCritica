@@ -20,3 +20,9 @@ CREATE TABLE IF NOT EXISTS matricula (
  estudiante_id BIGINT REFERENCES estudiante(id), seccion_id BIGINT REFERENCES seccion(id),
  PRIMARY KEY(estudiante_id, seccion_id)
 );
+CREATE TABLE IF NOT EXISTS sesion (
+ id BIGINT PRIMARY KEY, seccion_id BIGINT NOT NULL REFERENCES seccion(id),
+ tipo VARCHAR(10) NOT NULL CHECK(tipo IN ('TEORIA','PRACTICA')),
+ dia INT NOT NULL CHECK(dia BETWEEN 1 AND 7), inicio INT NOT NULL CHECK(inicio >= 420),
+ fin INT NOT NULL CHECK(fin <= 1320), CHECK(fin > inicio)
+);

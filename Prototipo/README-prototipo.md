@@ -31,7 +31,7 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 2. Cambiar a Luis e intentar el mismo curso: rechazo por cupo.
 3. Ana: retirar el curso; Luis puede matricularlo después.
 4. Luis: Estructuras de datos exige Programación I aprobada.
-5. Luis: matricular Programación I A y luego Matemática discreta: cruce de horario.
+5. Luis: matricular Programación I A y luego Matemática discreta: cruce entre prácticas del miércoles.
 6. Luis: con Programación I (4 créditos), Construcción de software (5) excede su máximo de 8, si el cupo está libre.
 7. Programación I B tampoco puede matricularse si ya se tiene la sección A.
 
@@ -49,7 +49,7 @@ Pruebas de integración del servicio contra H2: matrícula y retiro, retiro repe
 - Todas las escrituras bloquean primero estudiante y luego sección, dentro de una transacción. Esto serializa reglas por estudiante y consumo de cupos por sección.
 - La base aplica claves foráneas, unicidad de matrícula y límites de cupos.
 - El retiro elimina la matrícula activa; no se conserva historial de retiros en este prototipo.
-- Se modela un horario por sección y un solo período. No hay lista de espera, integración externa ni autenticación.
+- Cada sección tiene sesiones de teoría y práctica. Solo los cruces práctica–práctica bloquean la matrícula. Se modela un solo período. No hay lista de espera, integración externa ni autenticación.
 - Los formularios usan POST. La selección de estudiante es solo para demostración: no hay autorización ni protección CSRF. Ejecutar localmente; antes de exponerlo se requiere Spring Security, identidad y autorización por estudiante.
 - No se han realizado commits ni cambios remotos. `sources/` permanece intacto.
 
@@ -62,3 +62,13 @@ Pruebas de integración del servicio contra H2: matrícula y retiro, retiro repe
 ## Pendientes
 
 Validación en PostgreSQL, migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables, servicio externo resiliente y métricas de carga. La licencia Apache 2.0 declarada en el repositorio original debe formalizarse por sus autores.
+
+
+## Actualización de oferta y agenda
+- Oferta agrupada por curso con secciones desplegables. Programación I, Estructuras de datos y Bases de datos tienen secciones A/B.
+- Los cursos aprobados y aquellos con prerrequisitos pendientes no aparecen en la oferta. Se mantiene la validación del servidor.
+- Cada sección incluye teoría y práctica. Solo se rechazan cruces práctica–práctica; los extremos contiguos no se consideran cruce.
+- Mis matrículas incluye agenda de lunes a domingo, 07:00–22:00, con colores por curso y carriles para superposiciones. En celular se selecciona un día.
+- Los rechazos aparecen en un diálogo centrado con foco inicial y cierre por Escape.
+- Nueve pruebas automáticas contra H2, sin fallos. PostgreSQL sigue pendiente de validación.
+- Después de copiar los archivos a Prototipo, detener y volver a iniciar la aplicación para cargar Java, esquema y datos nuevos. No copiar target.

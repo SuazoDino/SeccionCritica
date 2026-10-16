@@ -14,7 +14,8 @@ public class WebController {
     @GetMapping({"/oferta", "/matriculas"})
     public String oferta(@RequestParam long estudiante, Model model, jakarta.servlet.http.HttpServletRequest request) {
         model.addAttribute("estudiante",service.estudiante(estudiante));
-        model.addAttribute("oferta",service.oferta());
+        model.addAttribute("cursos",service.cursos(estudiante));
+        model.addAttribute("agenda",service.agenda(estudiante));
         model.addAttribute("matriculas",service.matriculas(estudiante));
         model.addAttribute("creditos",service.creditos(estudiante));
         model.addAttribute("vista",request.getRequestURI().equals("/matriculas") ? "matriculas" : "oferta");
