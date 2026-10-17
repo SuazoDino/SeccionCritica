@@ -1,1 +1,13 @@
-<!doctype html><html lang="es" xmlns:th="http://www.thymeleaf.org"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sección Crítica · Revisa la solicitud</title><link rel="stylesheet" href="/app.css"></head><body><main class="contenido"><p class="eyebrow">SECCIÓN CRÍTICA</p><h1>No pudimos completar la solicitud.</h1><p th:text="${mensaje ?: 'Vuelve al inicio e intenta nuevamente.'}"></p><a class="boton" href="/">Volver al inicio</a></main></body></html>
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: head('Revisa la solicitud', false)}"></head>
+<body>
+<header th:replace="~{fragmentos :: marca}"></header>
+<main class="contenido">
+    <p class="eyebrow">SECCIÓN CRÍTICA</p>
+    <h1>No pudimos completar la solicitud.</h1>
+    <p th:text="${mensaje ?: 'Vuelve al inicio e intenta nuevamente.'}">Vuelve al inicio e intenta nuevamente.</p>
+    <a class="boton" th:href="@{/}">Volver al inicio</a>
+</main>
+</body>
+</html>

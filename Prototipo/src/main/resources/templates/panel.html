@@ -1,19 +1,167 @@
 <!doctype html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sección Crítica · Matrícula</title><link rel="stylesheet" href="/app.css"><link rel="stylesheet" href="/matricula.css"><script src="/matricula.js" defer></script></head><body>
-<header><a class="marca" href="/">SC<span>Sección Crítica</span></a><a href="/">Cambiar estudiante ↗</a></header>
-<div class="layout"><aside><p class="eyebrow">PORTAL DEL ESTUDIANTE</p><h2 th:text="${estudiante.nombre}"></h2><small th:text="${estudiante.codigo}"></small>
-<nav aria-label="Principal"><a th:classappend="${vista == 'oferta'} ? 'activo'" th:href="@{/oferta(estudiante=${estudiante.id})}">Oferta de cursos ↗</a><a th:classappend="${vista == 'matriculas'} ? 'activo'" th:href="@{/matriculas(estudiante=${estudiante.id})}">Mis matrículas</a></nav>
-<div class="carga"><small>CRÉDITOS MATRICULADOS</small><p><strong th:text="${creditos}"></strong><span th:text="' / ' + ${estudiante.max_creditos}"></span></p><progress th:value="${creditos}" th:max="${estudiante.max_creditos}" aria-label="Créditos matriculados"></progress><small>Período académico 2026-II</small></div><p class="ayuda">Modo demostración<br>La selección de perfil no es autenticación.</p></aside>
-<main class="contenido"><p class="eyebrow">TU RUTA ACADÉMICA / 2026-II</p><h1 th:text="${vista == 'oferta'} ? 'Elige tu siguiente reto.' : 'Así se ve tu semana.'"></h1><p class="intro" th:text="${vista == 'oferta'} ? 'Despliega un curso y encuentra tu sección.' : 'Tus clases de teoría y práctica, organizadas en un solo lugar.'"></p>
-<div class="alerta exito" role="status" th:if="${exito}" th:text="${exito}"></div>
-<dialog th:if="${error}" id="error-matricula" aria-labelledby="error-titulo" aria-describedby="error-mensaje"><div class="icono-error" aria-hidden="true">!</div><p class="eyebrow">REVISA TU SELECCIÓN</p><h2 id="error-titulo">No pudimos confirmar la operación</h2><p id="error-mensaje" th:text="${error}"></p><form method="dialog"><button autofocus>Entendido</button></form></dialog>
-<section th:if="${vista == 'oferta'}"><div class="encabezado"><h2>Oferta académica</h2><span class="badge" th:text="${#lists.size(cursos)} + ' cursos habilitados'"></span></div><p class="actualizacion">Se ocultan los cursos aprobados y los que tienen prerrequisitos pendientes. <a th:href="@{/oferta(estudiante=${estudiante.id})}">Actualizar cupos</a></p>
-<div class="vacio" th:if="${#lists.isEmpty(cursos)}">No tienes cursos habilitados en este momento.</div>
-<div class="listado"><details class="curso-fila" th:each="c : ${cursos}" open><summary><span class="curso-icono" aria-hidden="true">▤</span><span class="nombre-curso"><small th:text="${c.codigo}"></small><strong th:text="${c.curso}"></strong></span><span class="datos-curso" th:text="${c.creditos} + ' créditos · ' + ${#lists.size(c.secciones)} + ' secciones'"></span><span aria-hidden="true">⌄</span></summary>
-<div class="tabla-scroll"><table class="secciones"><caption class="sr-only" th:text="'Secciones de ' + ${c.curso}"></caption><thead><tr><th>Sección</th><th>Sesiones semanales</th><th>Vacantes</th><th>Acción</th></tr></thead><tbody><tr th:each="s : ${c.secciones}"><td><span class="letra-seccion" th:text="${s.nombre}"></span></td><td><div class="sesion-linea" th:each="h : ${s.sesiones}"><span class="tipo-sesion" th:classappend="${h.tipo == 'PRACTICA'} ? 'practica'" th:text="${h.tipo == 'TEORIA'} ? 'Teoría' : 'Práctica'"></span><span th:text="${T(pe.uni.seccioncritica.WebController).horario(h.dia,h.inicio,h.fin)}"></span></div></td><td><span class="vacantes" th:classappend="${s.cupo_disponible == 0} ? 'agotado'" th:text="${s.cupo_disponible} + ' / ' + ${s.cupo_maximo}"></span></td><td><form method="post" action="/matricular"><input type="hidden" name="estudiante" th:value="${estudiante.id}"><input type="hidden" name="seccion" th:value="${s.id}"><button th:disabled="${s.cupo_disponible == 0}" th:aria-label="'Matricularme en ' + ${c.curso} + ', sección ' + ${s.nombre}" th:text="${s.cupo_disponible == 0} ? 'Sin vacantes' : 'Matricularme ↗'"></button></form></td></tr></tbody></table></div></details></div></section>
-<section th:if="${vista == 'matriculas'}"><div class="encabezado"><h2>Agenda semanal</h2><span class="badge" th:text="${#lists.size(matriculas)} + ' cursos · ' + ${creditos} + ' créditos'"></span></div><p class="actualizacion">● Teoría · ◌ Práctica. Solo los cruces entre prácticas bloquean la matrícula.</p>
-<label class="selector-dia">Ver día <select id="dia-agenda"><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="7">Domingo</option></select></label>
-<div class="agenda-scroll"><div class="agenda"><div class="cabecera-agenda"><span>HORA</span><strong th:each="dia : ${ {'Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'} }" th:data-dia="${diaStat.count}" th:text="${dia}"></strong></div><div class="cuerpo-agenda"><div class="horas"><span th:each="hora : ${#numbers.sequence(7,21)}" th:text="${hora} + ':00'"></span></div><div class="columna-dia" th:each="dia : ${#numbers.sequence(1,7)}" th:data-dia="${dia}"><article class="evento" th:each="h : ${agenda}" th:if="${h.dia == dia}" th:classappend="${h.tipo == 'PRACTICA'} ? 'evento-practica'" th:attr="data-inicio=${h.inicio},data-fin=${h.fin}" th:style="'top:' + ${(h.inicio - 420) * 1.2} + 'px;height:' + ${(h.fin - h.inicio) * 1.2} + 'px;--color:var(--curso-' + ${h.curso_id} + ')'"><small th:text="${h.tipo == 'TEORIA'} ? 'TEORÍA' : 'PRÁCTICA'"></small><strong th:text="${h.curso}"></strong><span th:text="'Sección ' + ${h.seccion}"></span><small th:text="${T(pe.uni.seccioncritica.WebController).horario(h.dia,h.inicio,h.fin)}"></small></article></div></div></div></div>
-<div class="vacio" th:if="${#lists.isEmpty(matriculas)}"><h3>Tu agenda está lista para comenzar.</h3><p>Matricúlate en tu primer curso para verlo aquí.</p><a class="boton" th:href="@{/oferta(estudiante=${estudiante.id})}">Explorar oferta ↗</a></div>
-<article class="inscrita" th:each="s : ${matriculas}"><div><span class="codigo" th:text="${s.codigo} + ' · Sección ' + ${s.nombre}"></span><h3 th:text="${s.curso}"></h3><small th:text="${s.creditos} + ' créditos · Teoría y práctica confirmadas'"></small></div><form method="post" action="/retirar" onsubmit="return confirm('¿Retirarte de esta sección y liberar tu vacante?')"><input type="hidden" name="estudiante" th:value="${estudiante.id}"><input type="hidden" name="seccion" th:value="${s.id}"><button class="secundario">Retirarme</button></form></article></section>
-</main></div></body></html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: head('Matrícula', true)}"></head>
+<body>
+<header>
+    <a class="marca" th:href="@{/}">SC<span>Sección Crítica</span></a>
+    <a th:href="@{/}">Cambiar estudiante ↗</a>
+</header>
+
+<div class="layout">
+    <aside>
+        <p class="eyebrow">PORTAL DEL ESTUDIANTE</p>
+        <h2 th:text="${estudiante.nombre}"></h2>
+        <small th:text="${estudiante.codigo}"></small>
+        <nav aria-label="Principal">
+            <a th:classappend="${vista == 'oferta'} ? 'activo'" th:href="@{/oferta(estudiante=${estudiante.id})}">Oferta de cursos ↗</a>
+            <a th:classappend="${vista == 'matriculas'} ? 'activo'" th:href="@{/matriculas(estudiante=${estudiante.id})}">Mis matrículas</a>
+        </nav>
+        <div class="carga">
+            <small>CRÉDITOS MATRICULADOS</small>
+            <p><strong th:text="${creditos}"></strong><span th:text="' / ' + ${estudiante.maxCreditos}"></span></p>
+            <progress th:value="${creditos}" th:max="${estudiante.maxCreditos}" aria-label="Créditos matriculados"></progress>
+            <small>Período académico 2026-II</small>
+        </div>
+        <p class="ayuda">Modo demostración<br>La selección de perfil no es autenticación.</p>
+    </aside>
+
+    <main class="contenido">
+        <p class="eyebrow">TU RUTA ACADÉMICA / 2026-II</p>
+        <h1 th:text="${vista == 'oferta'} ? 'Elige tu siguiente reto.' : 'Así se ve tu semana.'"></h1>
+        <p class="intro" th:text="${vista == 'oferta'} ? 'Despliega un curso y encuentra tu sección.' : 'Tus clases de teoría y práctica, organizadas en un solo lugar.'"></p>
+
+        <div class="alerta exito" role="status" th:if="${exito}" th:text="${exito}"></div>
+        <dialog th:if="${error}" id="error-matricula" aria-labelledby="error-titulo" aria-describedby="error-mensaje">
+            <div class="icono-error" aria-hidden="true">!</div>
+            <p class="eyebrow">REVISA TU SELECCIÓN</p>
+            <h2 id="error-titulo">No pudimos confirmar la operación</h2>
+            <p id="error-mensaje" th:text="${error}"></p>
+            <form method="dialog"><button autofocus>Entendido</button></form>
+        </dialog>
+
+        <!-- Oferta académica -->
+        <section th:if="${vista == 'oferta'}">
+            <div class="encabezado">
+                <h2>Oferta académica</h2>
+                <span class="badge" th:text="${#lists.size(cursos)} + ' cursos habilitados'"></span>
+            </div>
+            <p class="actualizacion">
+                Se ocultan los cursos aprobados y los que tienen prerrequisitos pendientes.
+                <a th:href="@{/oferta(estudiante=${estudiante.id})}">Actualizar cupos</a>
+            </p>
+            <div class="vacio" th:if="${#lists.isEmpty(cursos)}">No tienes cursos habilitados en este momento.</div>
+
+            <div class="listado">
+                <details class="curso-fila" th:each="c : ${cursos}" open>
+                    <summary>
+                        <span class="curso-icono" aria-hidden="true">▤</span>
+                        <span class="nombre-curso">
+                            <small th:text="${c.curso.codigo}"></small>
+                            <strong th:text="${c.curso.nombre}"></strong>
+                        </span>
+                        <span class="datos-curso" th:text="${c.curso.creditos} + ' créditos · ' + ${#lists.size(c.secciones)} + ' secciones'"></span>
+                        <span aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="tabla-scroll">
+                        <table class="secciones">
+                            <caption class="sr-only" th:text="'Secciones de ' + ${c.curso.nombre}"></caption>
+                            <thead>
+                            <tr><th>Sección</th><th>Sesiones semanales</th><th>Vacantes</th><th>Acción</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="o : ${c.secciones}" th:with="s=${o.seccion}">
+                                <td><span class="letra-seccion" th:text="${s.nombre}"></span></td>
+                                <td>
+                                    <div class="sesion-linea" th:each="h : ${o.sesiones}">
+                                        <span class="tipo-sesion" th:classappend="${h.tipo.name() == 'PRACTICA'} ? 'practica'" th:text="${h.tipo.etiqueta}"></span>
+                                        <span th:text="${h.horario}"></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="vacantes" th:classappend="${s.agotada} ? 'agotado'" th:text="${s.cupoDisponible} + ' / ' + ${s.cupoMaximo}"></span>
+                                </td>
+                                <td>
+                                    <form method="post" th:action="@{/matricular}">
+                                        <input type="hidden" name="estudiante" th:value="${estudiante.id}">
+                                        <input type="hidden" name="seccion" th:value="${s.id}">
+                                        <button th:disabled="${s.agotada}"
+                                                th:aria-label="'Matricularme en ' + ${c.curso.nombre} + ', sección ' + ${s.nombre}"
+                                                th:text="${s.agotada} ? 'Sin vacantes' : 'Matricularme ↗'"></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Mis matrículas -->
+        <section th:if="${vista == 'matriculas'}">
+            <div class="encabezado">
+                <h2>Agenda semanal</h2>
+                <span class="badge" th:text="${#lists.size(inscripciones)} + ' cursos · ' + ${creditos} + ' créditos'"></span>
+            </div>
+            <p class="actualizacion">● Teoría · ◌ Práctica. Solo los cruces entre prácticas bloquean la matrícula.</p>
+
+            <label class="selector-dia">Ver día
+                <select id="dia-agenda">
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miércoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                    <option value="6">Sábado</option>
+                    <option value="7">Domingo</option>
+                </select>
+            </label>
+
+            <div class="agenda-scroll">
+                <div class="agenda">
+                    <div class="cabecera-agenda">
+                        <span>HORA</span>
+                        <strong th:each="dia : ${ {'Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'} }"
+                                th:data-dia="${diaStat.count}" th:text="${dia}"></strong>
+                    </div>
+                    <div class="cuerpo-agenda">
+                        <div class="horas"><span th:each="hora : ${#numbers.sequence(7, 21)}" th:text="${hora} + ':00'"></span></div>
+                        <div class="columna-dia" th:each="dia : ${#numbers.sequence(1, 7)}" th:data-dia="${dia}">
+                            <!-- 1.2 px por minuto desde las 07:00 (420). -->
+                            <article class="evento" th:each="h : ${agenda}" th:if="${h.dia == dia}"
+                                     th:classappend="${h.tipo.name() == 'PRACTICA'} ? 'evento-practica'"
+                                     th:attr="data-inicio=${h.inicio},data-fin=${h.fin}"
+                                     th:style="'top:' + ${(h.inicio - 420) * 1.2} + 'px;height:' + ${(h.fin - h.inicio) * 1.2} + 'px;--color:var(--curso-' + ${h.cursoId} + ', var(--verde))'">
+                                <small th:text="${#strings.toUpperCase(h.tipo.etiqueta)}"></small>
+                                <strong th:text="${h.curso}"></strong>
+                                <span th:text="'Sección ' + ${h.seccion}"></span>
+                                <small th:text="${h.horario}"></small>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vacio" th:if="${#lists.isEmpty(inscripciones)}">
+                <h3>Tu agenda está lista para comenzar.</h3>
+                <p>Matricúlate en tu primer curso para verlo aquí.</p>
+                <a class="boton" th:href="@{/oferta(estudiante=${estudiante.id})}">Explorar oferta ↗</a>
+            </div>
+
+            <article class="inscrita" th:each="i : ${inscripciones}">
+                <div>
+                    <span class="codigo" th:text="${i.codigo} + ' · Sección ' + ${i.seccion}"></span>
+                    <h3 th:text="${i.curso}"></h3>
+                    <small th:text="${i.creditos} + ' créditos · Teoría y práctica confirmadas'"></small>
+                </div>
+                <form method="post" th:action="@{/retirar}" data-confirmar="¿Retirarte de esta sección y liberar tu vacante?">
+                    <input type="hidden" name="estudiante" th:value="${estudiante.id}">
+                    <input type="hidden" name="seccion" th:value="${i.seccionId}">
+                    <button class="secundario">Retirarme</button>
+                </form>
+            </article>
+        </section>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(titulo, panel)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'Sección Crítica · ' + ${titulo}">Sección Crítica</title>
+    <!-- Si no hay internet durante la demo, la página usa la fuente del sistema y sigue funcionando. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" th:href="@{/app.css}">
+    <th:block th:if="${panel}">
+        <link rel="stylesheet" th:href="@{/matricula.css}">
+        <script th:src="@{/matricula.js}" defer></script>
+    </th:block>
+</head>
+<body>
+<header th:fragment="marca">
+    <a class="marca" th:href="@{/}">SC<span>Sección Crítica</span></a>
+</header>
+</body>
+</html>

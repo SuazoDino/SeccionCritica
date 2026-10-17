@@ -1,9 +1,32 @@
 const errorDialog = document.getElementById('error-matricula');
-if (errorDialog) errorDialog.showModal();
+if (errorDialog) {
+  if (typeof errorDialog.showModal === 'function') errorDialog.showModal();
+  else errorDialog.setAttribute('open', '');
+}
+
+// Confirmación opcional y bloqueo del botón para evitar envíos dobles por clics repetidos.
+document.querySelectorAll('form[method="post"]').forEach(form => {
+  form.addEventListener('submit', event => {
+    if (form.dataset.confirmar && !confirm(form.dataset.confirmar)) {
+      event.preventDefault();
+      return;
+    }
+    const button = form.querySelector('button');
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Procesando…';
+    }
+  });
+});
+
+// Al volver con el botón "atrás" el navegador puede restaurar la página con los botones bloqueados.
+window.addEventListener('pageshow', event => {
+  if (event.persisted) window.location.reload();
+});
 
 // Los eventos que se superponen se distribuyen en carriles sin ocultarse.
 document.querySelectorAll('.columna-dia').forEach(day => {
-  const events = [...day.querySelectorAll('.evento')].sort((a,b) => +a.dataset.inicio - +b.dataset.inicio);
+  const events = [...day.querySelectorAll('.evento')].sort((a, b) => +a.dataset.inicio - +b.dataset.inicio);
   let group = [], end = -1;
   function layout() {
     const lanes = [];
@@ -24,6 +47,7 @@ document.querySelectorAll('.columna-dia').forEach(day => {
   }
   layout();
 });
+
 const daySelect = document.getElementById('dia-agenda');
 if (daySelect) {
   const mobile = window.matchMedia('(max-width:700px)');

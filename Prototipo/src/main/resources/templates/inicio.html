@@ -1,5 +1,42 @@
 <!doctype html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sección Crítica · Ingreso</title><link rel="stylesheet" href="/app.css"></head>
-<body><header><a class="marca" href="/">SC<span>Sección Crítica</span></a><span class="badge">Prototipo · 2026-II</span></header>
-<main class="ingreso"><section><p class="eyebrow">TU SIGUIENTE CICLO EMPIEZA AQUÍ</p><h1>Un lugar para<br>tu próximo reto.</h1><p class="intro">Consulta la oferta académica, organiza tus horarios y asegura tu vacante.</p><div class="nota"><strong>Laboratorio de matrícula</strong><p>Selecciona un estudiante de ejemplo. Este prototipo no utiliza inicio de sesión y está pensado para una demostración local.</p></div></section>
-<section class="selector"><p class="eyebrow">01 / ELIGE TU PERFIL</p><h2>¿Con quién empezamos?</h2><p>Cada estudiante tiene un historial y un límite de créditos distinto.</p><a class="perfil" th:each="e : ${estudiantes}" th:href="@{/oferta(estudiante=${e.id})}"><span class="avatar" th:text="${#strings.substring(e.nombre,0,1)}"></span><span><strong th:text="${e.nombre}"></strong><small th:text="${e.codigo} + ' · Hasta ' + ${e.max_creditos} + ' créditos'"></small></span><span aria-hidden="true">↗</span></a><small>Ana y María aprobaron Programación I. Luis aún no.</small></section></main><footer>UNI · Construcción de Software II <span>Disponibilidad validada al confirmar cada matrícula.</span></footer></body></html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: head('Ingreso', false)}"></head>
+<body>
+<header>
+    <a class="marca" th:href="@{/}">SC<span>Sección Crítica</span></a>
+    <span class="badge">Prototipo · 2026-II</span>
+</header>
+
+<main class="ingreso">
+    <section>
+        <p class="eyebrow">TU SIGUIENTE CICLO EMPIEZA AQUÍ</p>
+        <h1>Un lugar para<br>tu próximo reto.</h1>
+        <p class="intro">Consulta la oferta académica, organiza tus horarios y asegura tu vacante.</p>
+        <div class="nota">
+            <strong>Laboratorio de matrícula</strong>
+            <p>Selecciona un estudiante de ejemplo. Este prototipo no utiliza inicio de sesión y está pensado para una demostración local.</p>
+        </div>
+    </section>
+
+    <section class="selector">
+        <p class="eyebrow">01 / ELIGE TU PERFIL</p>
+        <h2>¿Con quién empezamos?</h2>
+        <p>Cada estudiante tiene un historial y un límite de créditos distinto.</p>
+        <a class="perfil" th:each="e : ${estudiantes}" th:href="@{/oferta(estudiante=${e.id})}">
+            <span class="avatar" th:text="${e.inicial}"></span>
+            <span>
+                <strong th:text="${e.nombre}"></strong>
+                <small th:text="${e.codigo} + ' · Hasta ' + ${e.maxCreditos} + ' créditos'"></small>
+            </span>
+            <span aria-hidden="true">↗</span>
+        </a>
+        <small>Ana y María aprobaron Programación I. Luis aún no.</small>
+    </section>
+</main>
+
+<footer>
+    UNI · Construcción de Software II
+    <span>Disponibilidad validada al confirmar cada matrícula.</span>
+</footer>
+</body>
+</html>

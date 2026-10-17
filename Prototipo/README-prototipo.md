@@ -4,71 +4,82 @@ Motor de matrícula para el período de demostración 2026-II. Java 21, Spring B
 
 ## Ejecutar ahora
 
-Requisitos: JDK 21 y Maven 3.9+.
+Requisito: JDK 21. El wrapper descarga Maven 3.9 la primera vez.
 
-```powershell
-cd seccion-critica
-mvn spring-boot:run
+```bash
+cd Prototipo
+./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
 Abre http://localhost:8080. El perfil predeterminado `demo` usa H2 en memoria con compatibilidad PostgreSQL. Los datos se reinician al detener la aplicación. Selecciona Ana, Luis o María para recorrer oferta y matrículas.
 
 ## PostgreSQL
 
-Inicia Docker Desktop y define una contraseña local antes de levantar la base:
+Inicia Docker y define una contraseña local antes de levantar la base:
 
-```powershell
-$env:DB_PASSWORD='elige-una-clave-local'
+```bash
+cp .env.example .env                       # compose lee DB_PASSWORD de aquí
+export DB_PASSWORD=elige-una-clave-local   # PowerShell: $env:DB_PASSWORD='...'
 docker compose up -d db
-mvn spring-boot:run "-Dspring-boot.run.profiles=postgres"
+./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
 ```
 
-También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no existe, y los datos iniciales se insertan por identificador sin reponer cupos consumidos. El volumen de Docker conserva la información. Para cambios futuros del esquema se deberá incorporar una herramienta de migraciones.
+También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no existe, y los datos iniciales se insertan por identificador sin reponer cupos consumidos. El volumen de Docker conserva la información. `schema.sql` elimina las columnas de horario que versiones anteriores guardaban en `seccion`; para cambios futuros conviene incorporar una herramienta de migraciones (Flyway).
+
+## Antes de una demostración en vivo
+
+1. `./mvnw test` debe terminar sin fallos.
+2. `./mvnw -DskipTests package` y ejecutar `java -jar target/seccion-critica-0.1.0-SNAPSHOT.jar`: arranca más rápido que `spring-boot:run` y no depende de Maven.
+3. Comprobar http://localhost:8080/actuator/health → `{"status":"UP"}`.
+4. Con H2 basta reiniciar la aplicación para volver a los datos iniciales. Con PostgreSQL: `docker compose down -v` y volver a levantar.
+5. Sin internet la página funciona igual: solo cambia la tipografía por la del sistema.
 
 ## Demostración
 
 1. Ana: matricular Construcción de software (una sola vacante).
 2. Cambiar a Luis e intentar el mismo curso: rechazo por cupo.
 3. Ana: retirar el curso; Luis puede matricularlo después.
-4. Luis: Estructuras de datos exige Programación I aprobada.
+4. Luis: Estructuras de datos exige Programación I aprobada (no aparece en su oferta).
 5. Luis: matricular Programación I A y luego Matemática discreta: cruce entre prácticas del miércoles.
 6. Luis: con Programación I (4 créditos), Construcción de software (5) excede su máximo de 8, si el cupo está libre.
 7. Programación I B tampoco puede matricularse si ya se tiene la sección A.
 
 ## Pruebas
 
-```powershell
-mvn test
+```bash
+./mvnw test
 ```
 
-Pruebas de integración del servicio contra H2: matrícula y retiro, retiro repetido, reglas, identificadores inexistentes y carreras con hilos coordinados para último cupo, horarios y créditos por estudiante. Se ejecutan transacciones reales; las pruebas no envuelven las carreras en una transacción compartida. Falta validar esas mismas garantías sobre PostgreSQL real antes de usarlo fuera de la demo.
+- `service/MatriculaServiceH2Test` y `service/MatriculaServicePostgresTest` ejecutan las mismas pruebas (`ReglasMatriculaTestBase`): matrícula y retiro, retiro repetido, cada regla académica, identificadores inexistentes y carreras con hilos coordinados para último cupo, horarios y créditos por estudiante. Usan transacciones reales; las carreras no comparten una transacción. La clase de PostgreSQL usa Testcontainers y se omite si Docker no está disponible.
+- `controller/PaginasTest` recorre la demo por HTTP y comprueba que los enlaces mal formados (sin estudiante, identificador no numérico o inexistente, método incorrecto, ruta desconocida) muestran una página amable con el código adecuado y nunca un error 500.
+
+## Robustez
+
+- Todas las excepciones terminan en `error.html` con un mensaje claro (`ManejadorErrores`); nunca se muestran trazas.
+- Los rechazos por regla y la contención momentánea de la base vuelven al panel con un diálogo, sin modificar datos.
+- Tiempos máximos: 5 s para obtener conexión, 5 s de espera por bloqueo y 10 s por transacción de matrícula. Una base lenta produce "intenta nuevamente", no una página colgada.
+- El botón se desactiva al enviar para evitar matrículas dobles por clics repetidos; el servidor igual rechaza duplicados.
 
 ## Decisiones
 
-- JDBC permite ver explícitamente los bloqueos `SELECT FOR UPDATE`.
-- Todas las escrituras bloquean primero estudiante y luego sección, dentro de una transacción. Esto serializa reglas por estudiante y consumo de cupos por sección.
-- La base aplica claves foráneas, unicidad de matrícula y límites de cupos.
+- JDBC (`JdbcClient`) permite ver explícitamente los bloqueos `SELECT ... FOR UPDATE`.
+- Todas las escrituras bloquean primero estudiante y luego sección, dentro de una transacción. Esto serializa reglas por estudiante y consumo de cupos por sección, y el orden fijo evita interbloqueos.
+- La base aplica claves foráneas, unicidad de matrícula y límites de cupos (`CHECK`).
 - El retiro elimina la matrícula activa; no se conserva historial de retiros en este prototipo.
-- Cada sección tiene sesiones de teoría y práctica. Solo los cruces práctica–práctica bloquean la matrícula. Se modela un solo período. No hay lista de espera, integración externa ni autenticación.
-- Los formularios usan POST. La selección de estudiante es solo para demostración: no hay autorización ni protección CSRF. Ejecutar localmente; antes de exponerlo se requiere Spring Security, identidad y autorización por estudiante.
-- No se han realizado commits ni cambios remotos. `sources/` permanece intacto.
+- Cada sección tiene sesiones de teoría y práctica en la tabla `sesion`. Solo los cruces práctica–práctica bloquean la matrícula; los extremos contiguos no se consideran cruce. Se modela un solo período. No hay lista de espera, integración externa ni autenticación.
+- Los formularios usan POST. La selección de estudiante es solo para demostración: no hay autorización ni protección CSRF. Antes de exponerlo se requiere Spring Security, identidad y autorización por estudiante.
 
 ## Estructura
 
-`src/main/java`: aplicación, servicio transaccional y controlador web.
-`src/main/resources`: perfiles, esquema, datos, plantillas y estilos.
-`src/test/java`: pruebas de reglas y concurrencia.
+| Paquete / carpeta | Contenido |
+|---|---|
+| `controller/` | `MatriculaController` (páginas y formularios) y `ManejadorErrores` (`@ControllerAdvice`) |
+| `service/` | `MatriculaService`: reglas académicas y transacciones |
+| `repository/` | Una clase por agregado con el SQL (`EstudianteRepository`, `CursoRepository`, `SeccionRepository`, `MatriculaRepository`) |
+| `model/` | Records de dominio y de vista (`Estudiante`, `Curso`, `Seccion`, `Sesion`, `CursoOferta`, `EventoAgenda`, …) |
+| `exception/` | `SeccionCriticaException` y sus subclases |
+| `resources/` | Perfiles, `schema.sql`, `data.sql`, plantillas (`templates/`) y estilos (`static/`) |
 
 ## Pendientes
 
-Validación en PostgreSQL, migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables, servicio externo resiliente y métricas de carga. La licencia Apache 2.0 declarada en el repositorio original debe formalizarse por sus autores.
-
-
-## Actualización de oferta y agenda
-- Oferta agrupada por curso con secciones desplegables. Programación I, Estructuras de datos y Bases de datos tienen secciones A/B.
-- Los cursos aprobados y aquellos con prerrequisitos pendientes no aparecen en la oferta. Se mantiene la validación del servidor.
-- Cada sección incluye teoría y práctica. Solo se rechazan cruces práctica–práctica; los extremos contiguos no se consideran cruce.
-- Mis matrículas incluye agenda de lunes a domingo, 07:00–22:00, con colores por curso y carriles para superposiciones. En celular se selecciona un día.
-- Los rechazos aparecen en un diálogo centrado con foco inicial y cierre por Escape.
-- Nueve pruebas automáticas contra H2, sin fallos. PostgreSQL sigue pendiente de validación.
-- Después de copiar los archivos a Prototipo, detener y volver a iniciar la aplicación para cargar Java, esquema y datos nuevos. No copiar target.
+Migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables (`ReglaMatricula`), servicio externo resiliente y métricas de carga. La licencia Apache 2.0 debe formalizarse con un archivo `LICENSE`.

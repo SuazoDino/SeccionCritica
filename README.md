@@ -6,8 +6,8 @@ Motor de matrícula de código abierto con control de cupos concurrentes.
 
 - **Universidad:** Universidad Nacional de Ingeniería (UNI) — FIIS
 - **Curso:** Construcción de Software II – SW707
-- **Docente:** *[Nombre del docente]*
-- **Semestre:** *[2026-II]*
+- **Docente:** Anibal Guillen
+- **Semestre:** 2026-II
 - **Integrantes:**
 
 | Nombre completo | Código |
@@ -19,37 +19,67 @@ Motor de matrícula de código abierto con control de cupos concurrentes.
 
 Durante la apertura de matrícula, miles de estudiantes compiten por cupos limitados. Sin control de concurrencia se generan sobrecupos, cruces de horario y caídas del sistema. **Sección Crítica** resuelve ese núcleo (cupos, concurrencia, reglas académicas, resiliencia) de forma configurable para distintas instituciones.
 
-Documentación técnica completa: [`docs/documento-tecnico-parcial.md`](docs/documento-tecnico-parcial.md)
+Documentación técnica: [`documentacion_tecnica_parcial.md`](documentacion_tecnica_parcial.md) · Detalle del prototipo: [`Prototipo/README-prototipo.md`](Prototipo/README-prototipo.md)
 
-## Stack
+## Stack del prototipo
 
-Java + Spring Boot · PostgreSQL · React/Thymeleaf · API REST · Resilience4j · Docker · JUnit 5
+Java 21 · Spring Boot 4.1 (Web MVC, JDBC, Actuator) · Thymeleaf · H2 (demo) / PostgreSQL 17 · Docker Compose · JUnit 5 + Testcontainers
 
-## Instalación
+Previstos para versiones siguientes (aún no incluidos): API REST con OpenAPI, Resilience4j, reglas intercambiables por institución.
+
+## Ejecutar
+
+Requisitos: JDK 21. Maven no es necesario: se usa el wrapper incluido (`mvnw`).
 
 ```bash
-git clone <url-del-repositorio>
-cd seccion-critica
-cp .env.example .env
-docker-compose up -d db
-mvn clean install
-mvn spring-boot:run -pl src
+cd Prototipo
+./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
-API: `http://localhost:8080` · Docs OpenAPI: `http://localhost:8080/swagger-ui.html`
+Abre http://localhost:8080. Usa H2 en memoria; no requiere base de datos instalada.
+
+Con PostgreSQL (requiere Docker):
+
+```bash
+cd Prototipo
+cp .env.example .env            # define DB_PASSWORD
+export DB_PASSWORD=elige-una-clave-local
+docker compose up -d db
+./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+```
+
+Estado de la aplicación: http://localhost:8080/actuator/health
 
 ## Pruebas
 
 ```bash
-mvn test
+cd Prototipo
+./mvnw test
 ```
+
+Si Docker está disponible, las pruebas de reglas y concurrencia también se ejecutan contra PostgreSQL real; si no, esa clase se omite.
 
 ## Estructura
 
 ```
-src/ · tests/ · docs/ · config/ · deployment/ · scripts/ · benchmarks/ · legacy/
+.
+├── README.md
+├── documentacion_tecnica_parcial.md
+└── Prototipo/                      proyecto Spring Boot (Maven)
+    ├── pom.xml · mvnw · compose.yaml · .env.example
+    ├── Capturas/                   capturas de la demo
+    └── src/
+        ├── main/java/pe/uni/seccioncritica/
+        │   ├── Application.java
+        │   ├── controller/         páginas web y manejo global de errores
+        │   ├── service/            reglas de matrícula y transacciones
+        │   ├── repository/         consultas SQL (JdbcClient)
+        │   ├── model/              records de dominio
+        │   └── exception/          excepciones de dominio
+        ├── main/resources/         perfiles, schema.sql, data.sql, templates/, static/
+        └── test/java/...           pruebas de servicio (H2 y PostgreSQL) y de páginas
 ```
 
 ## Licencia
 
-Apache 2.0
+Apache 2.0 (pendiente de formalizar con el archivo `LICENSE`).

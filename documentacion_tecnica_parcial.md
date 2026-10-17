@@ -117,6 +117,22 @@ Entidades principales: `Curso`, `Seccion` (con `cupoMaximo` y `cupoDisponible`),
 
 *[completar con el diagrama entidad-relación final una vez estabilizado el modelo]*
 
+### 3.4 Estado de implementación en el prototipo
+
+El diseño anterior describe la versión objetivo. El prototipo de `Prototipo/` implementa el núcleo con estas diferencias:
+
+| Diseño | Prototipo actual |
+|---|---|
+| Persistencia con JPA | Spring JDBC (`JdbcClient`) para que los `SELECT ... FOR UPDATE` sean explícitos. Capas `controller` → `service` → `repository`, con records en `model`. |
+| API REST con OpenAPI | Interfaz web Thymeleaf con formularios POST. La API REST queda pendiente. |
+| Reglas como interfaz `ReglaMatricula` | Reglas (aprobado, duplicado, cupo, prerrequisito, créditos, cruce de prácticas) dentro de `MatriculaService.matricular()`. La extracción a una interfaz queda pendiente. |
+| Jerarquía de excepciones (sección 7.1) | Implementada: `SeccionCriticaException`, `RecursoNoEncontradoException`, `MatriculaRechazadaException` y sus subclases de cupo, prerrequisito, créditos y cruce de horario. `ServicioExternoNoDisponibleException` queda pendiente con la sección 9. |
+| Retiro con estado "retirada" | El retiro elimina la fila de `matricula`; no hay historial de estados. |
+| `HistorialAcademico`, `ReglaMatricula` | Tabla `aprobado` (cursos aprobados por estudiante). |
+| Resilience4j (sección 9) | No incluido todavía. Hay tiempos máximos de conexión, de bloqueo y de transacción, y manejo global de errores. |
+
+Modelo de datos del prototipo: `estudiante`, `curso` (con `prerrequisito`), `aprobado`, `seccion` (`cupo_maximo`, `cupo_disponible`), `sesion` (teoría/práctica por día y minuto) y `matricula`.
+
 ---
 
 ## 4. Dependencias y reúso
@@ -276,7 +292,9 @@ Se implementa una prueba con `ExecutorService` y `CountDownLatch` que lanza *N* 
 2. Los *N-1* hilos restantes reciben `CupoNoDisponibleException`.
 3. El estado final en base de datos es consistente (`matriculados == cupoMaximo`).
 
-*[completar con el código final de la prueba y su resultado — captura o log de ejecución]*
+Implementación: `ReglasMatriculaTestBase.ultimoCupoTieneUnSoloGanador()` en `Prototipo/src/test/java/pe/uni/seccioncritica/service/`. Tres hilos esperan en un `CountDownLatch` y se liberan a la vez sobre la sección de un único cupo. La misma clase se ejecuta contra H2 (`MatriculaServiceH2Test`) y contra PostgreSQL 17 con Testcontainers (`MatriculaServicePostgresTest`). Resultado: un solo éxito, cupo final 0 y una sola fila en `matricula`, en ambas bases. Los rechazos llegan como `CupoNoDisponibleException`.
+
+Prueba manual adicional sobre PostgreSQL: 30 solicitudes HTTP simultáneas (3 estudiantes × 10) por el último cupo terminaron con una sola matrícula, cupo 0 y ningún error en el log.
 
 ---
 
