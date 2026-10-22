@@ -50,6 +50,20 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 ./mvnw test
 ```
 
+Para la verificación de entrega v1.0 ejecutar `./mvnw clean verify`. El informe de cambios,
+runtime, resiliencia, errores, evidencia y trazabilidad está en `../docs/informe-v1.0.md`.
+
+La especificación de contratos, invariantes y evidencia de concurrencia está en
+`docs/contratos-matricula-y-concurrencia.md`. El análisis del árbol Maven,
+licencias y auditoría OWASP está en `docs/analisis-dependencias.md`.
+
+Para generar el árbol y ejecutar la auditoría bajo demanda:
+
+```bash
+./mvnw dependency:tree -DoutputFile=target/dependency-tree.txt
+./mvnw org.owasp:dependency-check-maven:check
+```
+
 - `service/MatriculaServiceH2Test` y `service/MatriculaServicePostgresTest` ejecutan las mismas pruebas (`ReglasMatriculaTestBase`): matrícula y retiro, retiro repetido, cada regla académica, identificadores inexistentes y carreras con hilos coordinados para último cupo, horarios y créditos por estudiante. Usan transacciones reales; las carreras no comparten una transacción. La clase de PostgreSQL usa Testcontainers y se omite si Docker no está disponible.
 - `controller/PaginasTest` recorre la demo por HTTP y comprueba que los enlaces mal formados (sin estudiante, identificador no numérico o inexistente, método incorrecto, ruta desconocida) muestran una página amable con el código adecuado y nunca un error 500.
 
@@ -82,4 +96,4 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 
 ## Pendientes
 
-Migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables (`ReglaMatricula`), servicio externo resiliente y métricas de carga. La licencia Apache 2.0 debe formalizarse con un archivo `LICENSE`.
+Migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables (`ReglaMatricula`) y métricas de carga. La verificación académica externa ya cuenta con timeout, reintentos y circuit breaker en v1.0. La licencia Apache 2.0 debe formalizarse con un archivo `LICENSE`.
