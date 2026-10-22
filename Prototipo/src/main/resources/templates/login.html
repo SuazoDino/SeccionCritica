@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: head('Iniciar sesión', false)}"></head>
+<body>
+<main class="acceso">
+    <section th:replace="~{fragmentos :: marca-acceso}"></section>
+
+    <section class="acceso-panel">
+        <div class="acceso-tarjeta">
+            <p class="eyebrow">PORTAL DEL ESTUDIANTE</p>
+            <h2>Iniciar sesión</h2>
+            <p class="acceso-intro">Ingresa con tu código de estudiante y tu contraseña.</p>
+
+            <div class="alerta error" role="alert" th:if="${param.error}">Código o contraseña incorrectos.</div>
+            <div class="alerta exito" role="status" th:if="${param.salida}">Cerraste sesión correctamente.</div>
+            <div class="alerta exito" role="status" th:if="${param.restablecida}">Tu contraseña se actualizó. Ya puedes ingresar.</div>
+
+            <form class="formulario" method="post" th:action="@{/login}">
+                <label for="codigo">Código de estudiante</label>
+                <input id="codigo" name="codigo" autocomplete="username" autocapitalize="characters"
+                       spellcheck="false" placeholder="Ej. 20230001A" required autofocus>
+
+                <div class="etiqueta-fila">
+                    <label for="clave">Contraseña</label>
+                    <a th:href="@{/recuperar}">¿Olvidaste tu contraseña?</a>
+                </div>
+                <div class="campo-clave">
+                    <input id="clave" name="clave" type="password" autocomplete="current-password" required>
+                    <button type="button" class="ver-clave" aria-controls="clave" aria-pressed="false">Mostrar</button>
+                </div>
+                <p class="aviso-mayus" role="status" hidden>Bloq Mayús está activado.</p>
+
+                <label class="casilla"><input type="checkbox" name="recordarme"> Mantener la sesión iniciada</label>
+                <button type="submit">Ingresar</button>
+            </form>
+
+            <div class="nota" th:if="${cuentasDemo}">
+                <strong>Cuentas de demostración</strong>
+                <p>Contraseña para todas: <code>Matricula2026</code></p>
+                <ul>
+                    <li th:each="e : ${cuentasDemo}">
+                        <code th:text="${e.codigo}"></code> <span th:text="${e.nombre}"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

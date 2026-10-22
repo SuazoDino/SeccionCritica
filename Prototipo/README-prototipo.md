@@ -11,7 +11,13 @@ cd Prototipo
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
-Abre http://localhost:8080. El perfil predeterminado `demo` usa H2 en memoria con compatibilidad PostgreSQL. Los datos se reinician al detener la aplicación. Selecciona Ana, Luis o María para recorrer oferta y matrículas.
+Abre http://localhost:8080. El perfil predeterminado `demo` usa H2 en memoria con compatibilidad PostgreSQL. Los datos se reinician al detener la aplicación. La aplicación abre directamente en el inicio de sesión; las cuentas de prueba aparecen en la misma pantalla:
+
+| Código | Estudiante | Contraseña |
+|---|---|---|
+| `20230001A` | Ana Torres | `Matricula2026` |
+| `20230002B` | Luis Ramos | `Matricula2026` |
+| `20230003C` | María Flores | `Matricula2026` |
 
 ## PostgreSQL
 
@@ -24,7 +30,7 @@ docker compose up -d db
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
 ```
 
-También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no existe, y los datos iniciales se insertan por identificador sin reponer cupos consumidos. El volumen de Docker conserva la información. `schema.sql` elimina las columnas de horario que versiones anteriores guardaban en `seccion`; para cambios futuros conviene incorporar una herramienta de migraciones (Flyway).
+También se admiten `DB_URL`, `DB_USER`, `PORT` y `URL_PUBLICA` (base de los enlaces de recuperación). El esquema se crea si no existe, y los datos iniciales se insertan por identificador sin reponer cupos consumidos. El volumen de Docker conserva la información. `schema.sql` elimina las columnas de horario que versiones anteriores guardaban en `seccion`; para cambios futuros conviene incorporar una herramienta de migraciones (Flyway).
 
 ## Antes de una demostración en vivo
 
@@ -37,7 +43,7 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 ## Demostración
 
 1. Ana: matricular Construcción de software (una sola vacante).
-2. Cambiar a Luis e intentar el mismo curso: rechazo por cupo.
+2. Cerrar sesión, ingresar como Luis e intentar el mismo curso: rechazo por cupo.
 3. Ana: retirar el curso; Luis puede matricularlo después.
 4. Luis: Estructuras de datos exige Programación I aprobada (no aparece en su oferta).
 5. Luis: matricular Programación I A y luego Matemática discreta: cruce entre prácticas del miércoles.
@@ -51,7 +57,8 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 ```
 
 - `service/MatriculaServiceH2Test` y `service/MatriculaServicePostgresTest` ejecutan las mismas pruebas (`ReglasMatriculaTestBase`): matrícula y retiro, retiro repetido, cada regla académica, identificadores inexistentes y carreras con hilos coordinados para último cupo, horarios y créditos por estudiante. Usan transacciones reales; las carreras no comparten una transacción. La clase de PostgreSQL usa Testcontainers y se omite si Docker no está disponible.
-- `controller/PaginasTest` recorre la demo por HTTP y comprueba que los enlaces mal formados (sin estudiante, identificador no numérico o inexistente, método incorrecto, ruta desconocida) muestran una página amable con el código adecuado y nunca un error 500.
+- `controller/AccesoTest` cubre el inicio de sesión (correcto, incorrecto, código en minúsculas), el cierre de sesión, el rechazo sin token CSRF, la redirección al login sin sesión y la recuperación de contraseña completa: validaciones de la clave nueva, enlace de un solo uso, enlace vencido o inventado y anulación del enlace anterior al pedir uno nuevo.
+- `controller/PaginasTest` recorre la demo por HTTP con una sesión iniciada y comprueba que los enlaces mal formados (sección no numérica o faltante, estudiante inexistente, método incorrecto, ruta desconocida) muestran una página amable con el código adecuado y nunca un error 500.
 
 ## Robustez
 
@@ -66,20 +73,25 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 - Todas las escrituras bloquean primero estudiante y luego sección, dentro de una transacción. Esto serializa reglas por estudiante y consumo de cupos por sección, y el orden fijo evita interbloqueos.
 - La base aplica claves foráneas, unicidad de matrícula y límites de cupos (`CHECK`).
 - El retiro elimina la matrícula activa; no se conserva historial de retiros en este prototipo.
-- Cada sección tiene sesiones de teoría y práctica en la tabla `sesion`. Solo los cruces práctica–práctica bloquean la matrícula; los extremos contiguos no se consideran cruce. Se modela un solo período. No hay lista de espera, integración externa ni autenticación.
-- Los formularios usan POST. La selección de estudiante es solo para demostración: no hay autorización ni protección CSRF. Antes de exponerlo se requiere Spring Security, identidad y autorización por estudiante.
+- Cada sección tiene sesiones de teoría y práctica en la tabla `sesion`. Solo los cruces práctica–práctica bloquean la matrícula; los extremos contiguos no se consideran cruce. Se modela un solo período. No hay lista de espera ni integración externa.
+- Spring Security con formulario propio (`/login`). El usuario es el código de estudiante (sin distinguir mayúsculas) y la contraseña se guarda como hash BCrypt en la tabla `cuenta`. Todos los formularios llevan token CSRF.
+- El estudiante de cada operación sale de la sesión (`UsuarioSesion`), nunca de la URL: un estudiante no puede ver ni matricular a otro.
+- "Mantener la sesión iniciada" usa una cookie remember-me de 7 días. Cerrar sesión es un POST.
+- Recuperación de contraseña: el enlace vence en 30 minutos, es de un solo uso y pedir otro anula el anterior. Solo se guarda el SHA-256 del token y el UPDATE condicional que lo consume evita que dos pestañas lo usen a la vez. La respuesta es la misma exista o no el código, para no revelar qué cuentas están registradas.
+- El prototipo no envía correos: `NotificadorRegistro` escribe el enlace en el registro de la aplicación y, en el perfil `demo`, la pantalla lo muestra. Para correo real basta otra implementación de `Notificador` con `spring-boot-starter-mail`.
 
 ## Estructura
 
 | Paquete / carpeta | Contenido |
 |---|---|
-| `controller/` | `MatriculaController` (páginas y formularios) y `ManejadorErrores` (`@ControllerAdvice`) |
-| `service/` | `MatriculaService`: reglas académicas y transacciones |
-| `repository/` | Una clase por agregado con el SQL (`EstudianteRepository`, `CursoRepository`, `SeccionRepository`, `MatriculaRepository`) |
+| `controller/` | `AccesoController` (login y recuperación), `MatriculaController` (páginas y formularios) y `ManejadorErrores` (`@ControllerAdvice`) |
+| `seguridad/` | `SeguridadConfig` (Spring Security), `DetalleUsuarios` y `UsuarioSesion` |
+| `service/` | `MatriculaService` (reglas académicas y transacciones) y `CuentaService` (recuperación de contraseña) |
+| `repository/` | Una clase por agregado con el SQL (`EstudianteRepository`, `CuentaRepository`, `CursoRepository`, `SeccionRepository`, `MatriculaRepository`) |
 | `model/` | Records de dominio y de vista (`Estudiante`, `Curso`, `Seccion`, `Sesion`, `CursoOferta`, `EventoAgenda`, …) |
 | `exception/` | `SeccionCriticaException` y sus subclases |
 | `resources/` | Perfiles, `schema.sql`, `data.sql`, plantillas (`templates/`) y estilos (`static/`) |
 
 ## Pendientes
 
-Migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables (`ReglaMatricula`), servicio externo resiliente y métricas de carga. La licencia Apache 2.0 debe formalizarse con un archivo `LICENSE`.
+Migraciones versionadas, envío real de correos y bloqueo por intentos fallidos de inicio de sesión, historial con estados, reglas intercambiables (`ReglaMatricula`), servicio externo resiliente y métricas de carga. La licencia Apache 2.0 debe formalizarse con un archivo `LICENSE`.

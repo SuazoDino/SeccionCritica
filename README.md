@@ -23,7 +23,7 @@ Documentación técnica: [`documentacion_tecnica_parcial.md`](documentacion_tecn
 
 ## Stack del prototipo
 
-Java 21 · Spring Boot 4.1 (Web MVC, JDBC, Actuator) · Thymeleaf · H2 (demo) / PostgreSQL 17 · Docker Compose · JUnit 5 + Testcontainers
+Java 21 · Spring Boot 4.1 (Web MVC, Security, JDBC, Actuator) · Thymeleaf · H2 (demo) / PostgreSQL 17 · Docker Compose · JUnit 5 + Testcontainers
 
 Previstos para versiones siguientes (aún no incluidos): API REST con OpenAPI, Resilience4j, reglas intercambiables por institución.
 
@@ -36,7 +36,7 @@ cd Prototipo
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
-Abre http://localhost:8080. Usa H2 en memoria; no requiere base de datos instalada.
+Abre http://localhost:8080 e inicia sesión con una cuenta de prueba (por ejemplo `20230001A` / `Matricula2026`; la pantalla de acceso lista las tres). Usa H2 en memoria; no requiere base de datos instalada.
 
 Con PostgreSQL (requiere Docker):
 

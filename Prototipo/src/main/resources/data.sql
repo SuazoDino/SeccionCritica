@@ -4,6 +4,11 @@ INSERT INTO estudiante (id, nombre, codigo, max_creditos) SELECT 1, 'Ana Torres'
 INSERT INTO estudiante (id, nombre, codigo, max_creditos) SELECT 2, 'Luis Ramos', '20230002B', 8 WHERE NOT EXISTS (SELECT 1 FROM estudiante WHERE id = 2);
 INSERT INTO estudiante (id, nombre, codigo, max_creditos) SELECT 3, 'María Flores', '20230003C', 20 WHERE NOT EXISTS (SELECT 1 FROM estudiante WHERE id = 3);
 
+-- Contraseña de demostración para las tres cuentas: Matricula2026
+INSERT INTO cuenta (estudiante_id, correo, clave_hash) SELECT 1, 'ana.torres@uni.pe', '$2a$10$14j6fa5SqAJ0aXOGDQDKzO.Q/w7Wd7xHgiSMvudW3QKyLQggKh5Hy' WHERE NOT EXISTS (SELECT 1 FROM cuenta WHERE estudiante_id = 1);
+INSERT INTO cuenta (estudiante_id, correo, clave_hash) SELECT 2, 'luis.ramos@uni.pe', '$2a$10$14j6fa5SqAJ0aXOGDQDKzO.Q/w7Wd7xHgiSMvudW3QKyLQggKh5Hy' WHERE NOT EXISTS (SELECT 1 FROM cuenta WHERE estudiante_id = 2);
+INSERT INTO cuenta (estudiante_id, correo, clave_hash) SELECT 3, 'maria.flores@uni.pe', '$2a$10$14j6fa5SqAJ0aXOGDQDKzO.Q/w7Wd7xHgiSMvudW3QKyLQggKh5Hy' WHERE NOT EXISTS (SELECT 1 FROM cuenta WHERE estudiante_id = 3);
+
 INSERT INTO curso (id, codigo, nombre, creditos, prerrequisito) SELECT 1, 'CC101', 'Programación I', 4, CAST(NULL AS BIGINT) WHERE NOT EXISTS (SELECT 1 FROM curso WHERE id = 1);
 INSERT INTO curso (id, codigo, nombre, creditos, prerrequisito) SELECT 2, 'CC201', 'Estructuras de datos', 4, 1 WHERE NOT EXISTS (SELECT 1 FROM curso WHERE id = 2);
 INSERT INTO curso (id, codigo, nombre, creditos, prerrequisito) SELECT 3, 'MA201', 'Matemática discreta', 4, CAST(NULL AS BIGINT) WHERE NOT EXISTS (SELECT 1 FROM curso WHERE id = 3);

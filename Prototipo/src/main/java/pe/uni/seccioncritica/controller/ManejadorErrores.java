@@ -25,7 +25,7 @@ public class ManejadorErrores {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ModelAndView parametroInvalido(MethodArgumentTypeMismatchException e) {
-        return pagina(HttpStatus.BAD_REQUEST, "El enlace no es válido. Vuelve al inicio y elige un estudiante.");
+        return pagina(HttpStatus.BAD_REQUEST, "El enlace no es válido. Vuelve al inicio e intenta nuevamente.");
     }
 
     @ExceptionHandler(DataAccessException.class)

@@ -55,17 +55,6 @@ header {
     font-size: 12px;
 }
 
-.ingreso {
-    max-width: 1250px;
-    margin: auto;
-    padding: 90px 5%;
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 85px;
-    min-height: 75vh;
-    align-items: start;
-}
-
 .eyebrow {
     font-size: 11px;
     font-weight: 700;
@@ -119,66 +108,6 @@ small {
 
 .nota p {
     font-size: 14px;
-}
-
-.selector {
-    background: #fff;
-    border: 1px solid var(--linea);
-    border-radius: 20px;
-    padding: 32px;
-    box-shadow: 0 16px 40px #163c2e08;
-}
-
-.selector>p:not(.eyebrow) {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #63746b;
-}
-
-.perfil {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    border: 1px solid var(--linea);
-    border-radius: 12px;
-    padding: 18px;
-    margin: 16px 0;
-    transition: .2s;
-}
-
-.perfil:hover {
-    border-color: var(--verde);
-    background: var(--fondo);
-    transform: translateY(-2px);
-}
-
-.perfil strong,
-.perfil small {
-    display: block;
-}
-
-.perfil>span:last-child {
-    margin-left: auto;
-}
-
-.avatar {
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    background: #e7eddd;
-    border-radius: 50%;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-
-footer {
-    border-top: 1px solid var(--linea);
-    padding: 25px 5%;
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: #63746b;
 }
 
 .layout {
@@ -437,12 +366,6 @@ button:disabled {
 }
 
 @media (max-width:900px) {
-    .ingreso {
-        grid-template-columns: 1fr;
-        gap: 35px;
-        padding-top: 45px;
-        min-height: 0;
-    }
     .layout {
         display: block;
     }
@@ -512,14 +435,6 @@ button:disabled {
     .marca span {
         font-size: 15px;
     }
-    .ingreso {
-        grid-template-columns: 1fr;
-        padding: 30px 20px;
-        gap: 25px;
-    }
-    .selector {
-        padding: 22px;
-    }
     .nota {
         margin-top: 25px;
     }
@@ -543,13 +458,6 @@ button:disabled {
         align-items: flex-start;
         flex-direction: column;
     }
-    footer {
-        display: block;
-        line-height: 1.8;
-    }
-    footer span {
-        display: block;
-    }
     .encabezado {
         margin-top: 20px;
     }
@@ -558,5 +466,232 @@ button:disabled {
 @media (max-width:340px) {
     .marca span {
         display: none;
+    }
+}
+
+/* Acceso: login, recuperar y restablecer contraseña */
+.acceso {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+
+.acceso-marca {
+    background: var(--verde);
+    color: #fff;
+    padding: 48px 7%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.acceso-marca .marca span {
+    border-color: #ffffff40;
+}
+
+.acceso-marca .eyebrow {
+    color: #c9dca0;
+}
+
+.acceso-marca p:not(.eyebrow) {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #d7e6df;
+    max-width: 420px;
+}
+
+.acceso-marca small {
+    color: #b8cfc6;
+}
+
+.acceso-panel {
+    display: grid;
+    place-items: center;
+    padding: 48px 6%;
+}
+
+.acceso-tarjeta {
+    width: 100%;
+    max-width: 440px;
+}
+
+.acceso-tarjeta h2 {
+    font-size: 30px;
+    letter-spacing: -1px;
+    margin: 12px 0 8px;
+}
+
+.acceso-intro {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #5b6d64;
+}
+
+.acceso-intro a,
+.etiqueta-fila a,
+.volver {
+    color: var(--verde);
+    font-weight: 600;
+}
+
+.acceso-intro a:hover,
+.etiqueta-fila a:hover,
+.volver:hover {
+    text-decoration: underline;
+}
+
+.volver {
+    display: inline-block;
+    font-size: 13px;
+    margin-bottom: 24px;
+}
+
+.formulario {
+    display: grid;
+    gap: 8px;
+    margin-top: 28px;
+}
+
+.formulario label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.formulario input:not([type="checkbox"]) {
+    width: 100%;
+    font: 15px 'DM Sans', system-ui, sans-serif;
+    color: var(--tinta);
+    background: #fff;
+    border: 1px solid #c5cfc6;
+    border-radius: 8px;
+    padding: 13px 14px;
+}
+
+.formulario input:not([type="checkbox"]):focus {
+    border-color: var(--verde);
+    outline: 3px solid #165c4e26;
+    outline-offset: 0;
+}
+
+.formulario > button[type="submit"] {
+    margin-top: 18px;
+    padding: 15px 20px;
+    font-size: 14px;
+}
+
+.etiqueta-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.etiqueta-fila label {
+    margin: 0;
+}
+
+.etiqueta-fila a {
+    font-size: 13px;
+}
+
+.campo-clave {
+    position: relative;
+}
+
+.formulario .campo-clave input {
+    padding-right: 86px;
+}
+
+.ver-clave {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 7px 10px;
+    background: transparent;
+    color: var(--verde);
+    font-size: 12px;
+}
+
+.ver-clave:hover {
+    background: var(--suave);
+}
+
+.aviso-mayus {
+    margin: 0;
+    font-size: 12px;
+    color: #92402c;
+}
+
+.formulario .casilla {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 400;
+    font-size: 14px;
+    margin-top: 14px;
+    cursor: pointer;
+}
+
+.casilla input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--verde);
+}
+
+.acceso-tarjeta .nota {
+    margin-top: 36px;
+    font-size: 14px;
+}
+
+.acceso-tarjeta .nota ul {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: grid;
+    gap: 6px;
+    color: #63746b;
+}
+
+.acceso-tarjeta .nota .boton {
+    margin-top: 4px;
+}
+
+code {
+    font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--suave);
+    border-radius: 5px;
+    padding: 2px 6px;
+    color: var(--tinta);
+}
+
+header .salir button {
+    padding: 10px 16px;
+}
+
+@media (max-width:900px) {
+    .acceso {
+        grid-template-columns: 1fr;
+        min-height: 0;
+    }
+    .acceso-marca {
+        padding: 24px 20px;
+        gap: 20px;
+    }
+    .acceso-marca h1 {
+        font-size: 30px;
+        letter-spacing: -1px;
+        margin: 10px 0;
+    }
+    .acceso-marca p:not(.eyebrow),
+    .acceso-marca small {
+        display: none;
+    }
+    .acceso-panel {
+        padding: 32px 20px 48px;
+        place-items: start center;
     }
 }

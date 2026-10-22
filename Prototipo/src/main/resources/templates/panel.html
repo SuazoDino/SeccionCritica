@@ -4,7 +4,9 @@
 <body>
 <header>
     <a class="marca" th:href="@{/}">SC<span>Sección Crítica</span></a>
-    <a th:href="@{/}">Cambiar estudiante ↗</a>
+    <form class="salir" method="post" th:action="@{/logout}">
+        <button class="secundario">Cerrar sesión</button>
+    </form>
 </header>
 
 <div class="layout">
@@ -13,8 +15,8 @@
         <h2 th:text="${estudiante.nombre}"></h2>
         <small th:text="${estudiante.codigo}"></small>
         <nav aria-label="Principal">
-            <a th:classappend="${vista == 'oferta'} ? 'activo'" th:href="@{/oferta(estudiante=${estudiante.id})}">Oferta de cursos ↗</a>
-            <a th:classappend="${vista == 'matriculas'} ? 'activo'" th:href="@{/matriculas(estudiante=${estudiante.id})}">Mis matrículas</a>
+            <a th:classappend="${vista == 'oferta'} ? 'activo'" th:href="@{/oferta}">Oferta de cursos ↗</a>
+            <a th:classappend="${vista == 'matriculas'} ? 'activo'" th:href="@{/matriculas}">Mis matrículas</a>
         </nav>
         <div class="carga">
             <small>CRÉDITOS MATRICULADOS</small>
@@ -22,7 +24,6 @@
             <progress th:value="${creditos}" th:max="${estudiante.maxCreditos}" aria-label="Créditos matriculados"></progress>
             <small>Período académico 2026-II</small>
         </div>
-        <p class="ayuda">Modo demostración<br>La selección de perfil no es autenticación.</p>
     </aside>
 
     <main class="contenido">
@@ -47,7 +48,7 @@
             </div>
             <p class="actualizacion">
                 Se ocultan los cursos aprobados y los que tienen prerrequisitos pendientes.
-                <a th:href="@{/oferta(estudiante=${estudiante.id})}">Actualizar cupos</a>
+                <a th:href="@{/oferta}">Actualizar cupos</a>
             </p>
             <div class="vacio" th:if="${#lists.isEmpty(cursos)}">No tienes cursos habilitados en este momento.</div>
 
@@ -82,7 +83,6 @@
                                 </td>
                                 <td>
                                     <form method="post" th:action="@{/matricular}">
-                                        <input type="hidden" name="estudiante" th:value="${estudiante.id}">
                                         <input type="hidden" name="seccion" th:value="${s.id}">
                                         <button th:disabled="${s.agotada}"
                                                 th:aria-label="'Matricularme en ' + ${c.curso.nombre} + ', sección ' + ${s.nombre}"
@@ -145,7 +145,7 @@
             <div class="vacio" th:if="${#lists.isEmpty(inscripciones)}">
                 <h3>Tu agenda está lista para comenzar.</h3>
                 <p>Matricúlate en tu primer curso para verlo aquí.</p>
-                <a class="boton" th:href="@{/oferta(estudiante=${estudiante.id})}">Explorar oferta ↗</a>
+                <a class="boton" th:href="@{/oferta}">Explorar oferta ↗</a>
             </div>
 
             <article class="inscrita" th:each="i : ${inscripciones}">
@@ -155,7 +155,6 @@
                     <small th:text="${i.creditos} + ' créditos · Teoría y práctica confirmadas'"></small>
                 </div>
                 <form method="post" th:action="@{/retirar}" data-confirmar="¿Retirarte de esta sección y liberar tu vacante?">
-                    <input type="hidden" name="estudiante" th:value="${estudiante.id}">
                     <input type="hidden" name="seccion" th:value="${i.seccionId}">
                     <button class="secundario">Retirarme</button>
                 </form>
