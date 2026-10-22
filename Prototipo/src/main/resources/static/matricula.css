@@ -186,7 +186,7 @@ dialog button {
 }
 
 .agenda {
-    min-width: 900px;
+    min-width: 680px;
 }
 
 .cabecera-agenda {
@@ -290,6 +290,53 @@ dialog button {
     }
 }
 
+/* En pantallas angostas cada sección pasa de fila de tabla a tarjeta, para que vacantes y botón sigan visibles. */
+@media (max-width:900px) {
+    .secciones thead {
+        display: none;
+    }
+    .secciones,
+    .secciones tbody {
+        display: block;
+    }
+    .secciones tr {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas: "letra sesiones sesiones" "vacantes vacantes accion";
+        align-items: center;
+        gap: 12px 16px;
+        padding: 16px 22px;
+        border-top: 1px solid #edf0e9;
+    }
+    .secciones td {
+        padding: 0;
+        border: 0;
+    }
+    .secciones td:nth-child(1) {
+        grid-area: letra;
+    }
+    .secciones td:nth-child(2) {
+        grid-area: sesiones;
+    }
+    .secciones td:nth-child(3) {
+        grid-area: vacantes;
+    }
+    .secciones td:nth-child(4) {
+        grid-area: accion;
+    }
+    .secciones td:nth-child(3)::before {
+        content: 'Vacantes';
+        margin-right: 10px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #657466;
+    }
+    .sesion-linea {
+        white-space: normal;
+    }
+}
+
 @media (max-width:700px) {
     .curso-fila summary {
         padding: 18px 14px;
@@ -332,7 +379,7 @@ dialog button {
     .cuerpo-agenda {
         grid-template-columns: 55px 1fr;
     }
-    .secciones {
-        min-width: 580px;
+    .secciones tr {
+        padding: 14px;
     }
 }
