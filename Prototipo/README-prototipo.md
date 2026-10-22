@@ -6,9 +6,9 @@ Motor de matrícula para el período de demostración 2026-II. Java 21, Spring B
 
 Requisito: JDK 21. El wrapper descarga Maven 3.9 la primera vez.
 
-```bash
-cd Prototipo
-./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
+```powershell
+Set-Location C:\SeccionCritica\Prototipo
+.\mvnw.cmd spring-boot:run
 ```
 
 Abre http://localhost:8080. El perfil predeterminado `demo` usa H2 en memoria con compatibilidad PostgreSQL. Los datos se reinician al detener la aplicación. Selecciona Ana, Luis o María para recorrer oferta y matrículas.
@@ -17,19 +17,19 @@ Abre http://localhost:8080. El perfil predeterminado `demo` usa H2 en memoria co
 
 Inicia Docker y define una contraseña local antes de levantar la base:
 
-```bash
-cp .env.example .env                       # compose lee DB_PASSWORD de aquí
-export DB_PASSWORD=elige-una-clave-local   # PowerShell: $env:DB_PASSWORD='...'
+```powershell
+Copy-Item .env.example .env
+$env:DB_PASSWORD='elige-una-clave-local'
 docker compose up -d db
-./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=postgres"
 ```
 
 También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no existe, y los datos iniciales se insertan por identificador sin reponer cupos consumidos. El volumen de Docker conserva la información. `schema.sql` elimina las columnas de horario que versiones anteriores guardaban en `seccion`; para cambios futuros conviene incorporar una herramienta de migraciones (Flyway).
 
 ## Antes de una demostración en vivo
 
-1. `./mvnw test` debe terminar sin fallos.
-2. `./mvnw -DskipTests package` y ejecutar `java -jar target/seccion-critica-0.1.0-SNAPSHOT.jar`: arranca más rápido que `spring-boot:run` y no depende de Maven.
+1. `.\mvnw.cmd test` debe terminar sin fallos.
+2. `.\mvnw.cmd -DskipTests package` y ejecutar `java -jar target/seccion-critica-0.1.0-SNAPSHOT.jar`: arranca más rápido que `spring-boot:run` y no depende de Maven.
 3. Comprobar http://localhost:8080/actuator/health → `{"status":"UP"}`.
 4. Con H2 basta reiniciar la aplicación para volver a los datos iniciales. Con PostgreSQL: `docker compose down -v` y volver a levantar.
 5. Sin internet la página funciona igual: solo cambia la tipografía por la del sistema.
@@ -46,12 +46,12 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 
 ## Pruebas
 
-```bash
-./mvnw test
+```powershell
+.\mvnw.cmd test
 ```
 
-Para la verificación de entrega v1.0 ejecutar `./mvnw clean verify`. El informe de cambios,
-runtime, resiliencia, errores, evidencia y trazabilidad está en `../docs/informe-v1.0.md`.
+Para la verificación de entrega v1.0 ejecutar `.\mvnw.cmd clean verify`. El informe final,
+runtime, resiliencia, errores, evidencia y trazabilidad está en `../docs/informe-final-v1.0.md`.
 
 La especificación de contratos, invariantes y evidencia de concurrencia está en
 `docs/contratos-matricula-y-concurrencia.md`. El análisis del árbol Maven,
@@ -59,12 +59,12 @@ licencias y auditoría OWASP está en `docs/analisis-dependencias.md`.
 
 Para generar el árbol y ejecutar la auditoría bajo demanda:
 
-```bash
-./mvnw dependency:tree -DoutputFile=target/dependency-tree.txt
-./mvnw org.owasp:dependency-check-maven:check
+```powershell
+.\mvnw.cmd dependency:tree "-DoutputFile=target/dependency-tree.txt"
+.\mvnw.cmd org.owasp:dependency-check-maven:check
 ```
 
-- `service/MatriculaServiceH2Test` y `service/MatriculaServicePostgresTest` ejecutan las mismas pruebas (`ReglasMatriculaTestBase`): matrícula y retiro, retiro repetido, cada regla académica, identificadores inexistentes y carreras con hilos coordinados para último cupo, horarios y créditos por estudiante. Usan transacciones reales; las carreras no comparten una transacción. La clase de PostgreSQL usa Testcontainers y se omite si Docker no está disponible.
+- `service/MatriculaServiceH2Test` y `service/MatriculaServicePostgresTest` ejecutan las mismas pruebas (`ReglasMatriculaTestBase`): matrícula y retiro, retiro repetido, cada regla académica, identificadores inexistentes y carreras con hilos coordinados para último cupo, horarios y créditos por estudiante. Usan transacciones reales; las carreras no comparten una transacción. La clase de PostgreSQL usa Testcontainers y requiere Docker para reproducirse.
 - `controller/PaginasTest` recorre la demo por HTTP y comprueba que los enlaces mal formados (sin estudiante, identificador no numérico o inexistente, método incorrecto, ruta desconocida) muestran una página amable con el código adecuado y nunca un error 500.
 
 ## Robustez
