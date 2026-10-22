@@ -78,6 +78,19 @@ class PaginasTest {
     }
 
     @Test
+    void identificadoresNegativosYParametrosAusentesSonControlados() throws Exception {
+        mvc.perform(get("/oferta").param("estudiante", "-1"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(not(containsString("Exception"))));
+        mvc.perform(post("/retirar").param("estudiante", "1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(not(containsString("Exception"))));
+        mvc.perform(post("/retirar").param("estudiante", "1").param("seccion", "-1"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(not(containsString("Exception"))));
+    }
+
+    @Test
     void enlacesMalFormadosNoRompenLaPagina() throws Exception {
         mvc.perform(get("/oferta")).andExpect(status().isBadRequest())
                 .andExpect(content().string(containsString("Volver al inicio")));

@@ -19,13 +19,13 @@ Motor de matrícula de código abierto con control de cupos concurrentes.
 
 Durante la apertura de matrícula, miles de estudiantes compiten por cupos limitados. Sin control de concurrencia se generan sobrecupos, cruces de horario y caídas del sistema. **Sección Crítica** resuelve ese núcleo (cupos, concurrencia, reglas académicas, resiliencia) de forma configurable para distintas instituciones.
 
-Documentación técnica: [`documentacion_tecnica_parcial.md`](documentacion_tecnica_parcial.md) · Detalle del prototipo: [`Prototipo/README-prototipo.md`](Prototipo/README-prototipo.md)
+Documentación técnica: [`documentacion_tecnica_parcial.md`](documentacion_tecnica_parcial.md) · Informe v1.0: [`docs/informe-v1.0.md`](docs/informe-v1.0.md) · Detalle del prototipo: [`Prototipo/README-prototipo.md`](Prototipo/README-prototipo.md)
 
 ## Stack del prototipo
 
 Java 21 · Spring Boot 4.1 (Web MVC, JDBC, Actuator) · Thymeleaf · H2 (demo) / PostgreSQL 17 · Docker Compose · JUnit 5 + Testcontainers
 
-Previstos para versiones siguientes (aún no incluidos): API REST con OpenAPI, Resilience4j, reglas intercambiables por institución.
+Previstos para versiones siguientes (aún no incluidos): API REST con OpenAPI y reglas intercambiables por institución. Resilience4j ya se usa en v1.0 para la frontera de verificación académica.
 
 ## Ejecutar
 
@@ -54,7 +54,7 @@ Estado de la aplicación: http://localhost:8080/actuator/health
 
 ```bash
 cd Prototipo
-./mvnw test
+./mvnw clean verify
 ```
 
 Si Docker está disponible, las pruebas de reglas y concurrencia también se ejecutan contra PostgreSQL real; si no, esa clase se omite.

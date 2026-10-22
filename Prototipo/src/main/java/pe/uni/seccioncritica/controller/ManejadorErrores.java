@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.ModelAndView;
 import pe.uni.seccioncritica.exception.RecursoNoEncontradoException;
+import pe.uni.seccioncritica.exception.ServicioExternoNoDisponibleException;
 
 /** Ninguna excepción llega al usuario como traza: todas terminan en la página error.html con un mensaje claro. */
 @ControllerAdvice
@@ -19,8 +20,14 @@ public class ManejadorErrores {
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ModelAndView noEncontrado(RecursoNoEncontradoException e) {
-        log.warn("Recurso inexistente: {}", e.getMessage());
+        log.warn("evento=recurso_no_encontrado motivo={}", e.getMessage());
         return pagina(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(ServicioExternoNoDisponibleException.class)
+    public ModelAndView servicioExternoNoDisponible(ServicioExternoNoDisponibleException e) {
+        log.warn("evento=servicio_externo_no_disponible motivo={}", e.getMessage());
+        return pagina(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

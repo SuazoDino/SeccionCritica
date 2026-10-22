@@ -264,7 +264,7 @@ private Long version;
 | Complejidad de implementación | Baja | Media (requiere manejo explícito de reintentos) |
 | Riesgo de interbloqueo | Mayor si se combina con otros locks | Ninguno |
 
-*[completar]*: Decisión final del equipo tras medir ambas estrategias bajo carga simulada (ver sección 10), con la justificación basada en los resultados obtenidos y no solo en la teoría.
+**Decisión implementada:** se usa locking pesimista con `FOR UPDATE`. Las pruebas coordinadas de H2 verifican que el último cupo tenga un solo ganador y que las escrituras del mismo estudiante respeten créditos y horarios. La medición de carga sostenida queda fuera del alcance de este prototipo.
 
 ### 8.4 Prueba reproducible
 
@@ -288,16 +288,16 @@ El flujo de matrícula consulta un servicio externo (simulado) de verificación 
 
 | Mecanismo | Configuración | Propósito |
 |---|---|---|
-| **Timeout** | *[completar, p. ej. 2s]* | Evitar que una solicitud de matrícula quede indefinidamente esperando al servicio externo. |
-| **Reintentos con backoff** | *[completar, p. ej. 3 intentos, backoff exponencial]* | Absorber fallas transitorias de red sin involucrar al usuario. |
-| **Circuit breaker** | *[completar umbral de fallas]* | Si el servicio externo falla reiteradamente, dejar de llamarlo temporalmente y degradar la respuesta en lugar de saturar el sistema con solicitudes que fallarán. |
+| **Timeout** | 2 s | Evitar que una solicitud de matrícula quede indefinidamente esperando al servicio externo. |
+| **Reintentos con backoff** | 3 intentos, espera de 50 ms | Absorber fallas transitorias de red sin involucrar al usuario. |
+| **Circuit breaker** | Ventana 4, mínimo 4 llamadas, umbral 50 %, apertura 5 s | Si el servicio externo falla reiteradamente, dejar de llamarlo temporalmente y degradar la respuesta en lugar de saturar el sistema con solicitudes que fallarán. |
 | **Fallback** | Rechazo explícito y auditable de la matrícula, con mensaje claro ("no se pudo verificar la situación académica, intente nuevamente") | Evitar tanto confirmar matrículas sin verificación como colgar la solicitud del estudiante. |
 
 ### 9.3 Resultado esperado
 
 Ante una falla del servicio externo, el sistema debe: (a) no caerse ni bloquear otras solicitudes de matrícula no relacionadas, (b) responder al estudiante con un mensaje claro y un código HTTP apropiado (503), y (c) registrar el evento para observabilidad.
 
-*[completar con evidencia: log o métrica mostrando el circuit breaker abriéndose ante fallas simuladas]*
+La prueba `VerificacionAcademicaServiceTest` verifica el reintento y el timeout con un stub determinista. El modo demo se puede cambiar con `VERIFICACION_ACADEMICA_MODO=fallo`; en ese caso se responde 503, no se abre la transacción de matrícula y se registra `evento=verificacion_academica_fallida`. La suite no simula carga sostenida.
 
 ---
 
@@ -316,7 +316,7 @@ Ante una falla del servicio externo, el sistema debe: (a) no caerse ni bloquear 
 
 ### 10.2 Resultados
 
-*[completar con capturas de ejecución, cobertura de pruebas, y métricas de la prueba de carga: número de solicitudes concurrentes simuladas, tasa de éxito/rechazo, tiempo de respuesta p50/p95/p99]*
+La evidencia automatizada se mantiene en las pruebas H2, la prueba de páginas y `VerificacionAcademicaServiceTest`. No se declara porcentaje de cobertura ni p50/p95/p99 porque todavía no se generó un reporte de cobertura o una prueba de carga.
 
 ---
 
@@ -326,7 +326,7 @@ Ante una falla del servicio externo, el sistema debe: (a) no caerse ni bloquear 
 
 - El ciclo de vida de la matrícula es simplificado (confirmada/retirada); no implementa aún lista de espera ni fases de matrícula.
 - La configuración de perfiles institucionales no está externalizada todavía (se compone programáticamente); la externalización completa con *feature flags* es trabajo de v2.0.
-- No se incluye todavía observabilidad con trazas distribuidas ni panel de métricas.
+- No se incluyen todavía trazas distribuidas, panel de métricas ni prueba de carga sostenida; sí hay logging estructurado de comandos, rechazos y fallas del servicio externo.
 - El servicio de verificación académica es simulado (stub/mock), no una integración real.
 
 ### 11.2 Trabajo previsto para v2.0 (Examen Final)

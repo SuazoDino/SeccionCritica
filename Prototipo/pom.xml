@@ -37,6 +37,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-circuitbreaker</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-retry</artifactId>
+            <version>2.2.0</version>
+        </dependency>
 
         <dependency>
             <groupId>com.h2database</groupId>
@@ -81,6 +91,17 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- Auditoría explícita bajo demanda: no participa en test/package normal. -->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>12.1.0</version>
+                <configuration>
+                    <failBuildOnCVSS>7.0</failBuildOnCVSS>
+                    <format>HTML,JSON</format>
+                    <skipTestScope>false</skipTestScope>
+                </configuration>
             </plugin>
         </plugins>
     </build>
