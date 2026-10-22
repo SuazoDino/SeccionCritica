@@ -1,3 +1,9 @@
+# Aviso de vigencia
+
+Este documento conserva el análisis histórico de la etapa parcial. Para la arquitectura, resultados y alcance reales de v1.0, usar [docs/informe-final-v1.0.md](docs/informe-final-v1.0.md). Las secciones sobre API REST, JPA, `ReglaMatricula`, perfiles institucionales o herramientas no presentes en el prototipo son antecedentes o propuestas, no capacidades entregadas.
+
+---
+
 # Documento técnico parcial — Sección Crítica
 
 **Curso:** Construcción de Software II – SW707 | Universidad Nacional de Ingeniería

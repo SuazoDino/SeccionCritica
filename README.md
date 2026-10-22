@@ -19,45 +19,45 @@ Motor de matrícula de código abierto con control de cupos concurrentes.
 
 Durante la apertura de matrícula, miles de estudiantes compiten por cupos limitados. Sin control de concurrencia se generan sobrecupos, cruces de horario y caídas del sistema. **Sección Crítica** resuelve ese núcleo (cupos, concurrencia, reglas académicas, resiliencia) de forma configurable para distintas instituciones.
 
-Documentación técnica: [`documentacion_tecnica_parcial.md`](documentacion_tecnica_parcial.md) · Informe v1.0: [`docs/informe-v1.0.md`](docs/informe-v1.0.md) · Detalle del prototipo: [`Prototipo/README-prototipo.md`](Prototipo/README-prototipo.md)
+Documentación: [`docs/informe-final-v1.0.md`](docs/informe-final-v1.0.md) · [`docs/guia-demostracion-v1.0.md`](docs/guia-demostracion-v1.0.md) · [`docs/guia-evidencias-v1.0.md`](docs/guia-evidencias-v1.0.md) · [`Prototipo/README-prototipo.md`](Prototipo/README-prototipo.md)
 
 ## Stack del prototipo
 
 Java 21 · Spring Boot 4.1 (Web MVC, JDBC, Actuator) · Thymeleaf · H2 (demo) / PostgreSQL 17 · Docker Compose · JUnit 5 + Testcontainers
 
-Previstos para versiones siguientes (aún no incluidos): API REST con OpenAPI y reglas intercambiables por institución. Resilience4j ya se usa en v1.0 para la frontera de verificación académica.
+Previstos para versiones siguientes: API REST/OpenAPI, autenticación, reglas intercambiables por institución y migraciones versionadas. Resilience4j ya se usa en v1.0 para la frontera de verificación académica.
 
 ## Ejecutar
 
 Requisitos: JDK 21. Maven no es necesario: se usa el wrapper incluido (`mvnw`).
 
-```bash
-cd Prototipo
-./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
+```powershell
+Set-Location Prototipo
+.\mvnw.cmd spring-boot:run
 ```
 
 Abre http://localhost:8080. Usa H2 en memoria; no requiere base de datos instalada.
 
 Con PostgreSQL (requiere Docker):
 
-```bash
-cd Prototipo
-cp .env.example .env            # define DB_PASSWORD
-export DB_PASSWORD=elige-una-clave-local
+```powershell
+Set-Location Prototipo
+Copy-Item .env.example .env
+$env:DB_PASSWORD='elige-una-clave-local'
 docker compose up -d db
-./mvnw spring-boot:run -Dspring-boot.run.profiles=postgres
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=postgres"
 ```
 
 Estado de la aplicación: http://localhost:8080/actuator/health
 
 ## Pruebas
 
-```bash
-cd Prototipo
-./mvnw clean verify
+```powershell
+Set-Location Prototipo
+.\mvnw.cmd clean verify
 ```
 
-Si Docker está disponible, las pruebas de reglas y concurrencia también se ejecutan contra PostgreSQL real; si no, esa clase se omite.
+La evidencia v1.0 comprobada incluye PostgreSQL 17 mediante Testcontainers; Docker debe estar operativo para reproducir esa parte.
 
 ## Estructura
 
@@ -79,6 +79,15 @@ Si Docker está disponible, las pruebas de reglas y concurrencia también se eje
         ├── main/resources/         perfiles, schema.sql, data.sql, templates/, static/
         └── test/java/...           pruebas de servicio (H2 y PostgreSQL) y de páginas
 ```
+
+## Documentación técnica
+
+- [`docs/informe-final-v1.0.md`](docs/informe-final-v1.0.md): informe académico consolidado y matriz de rúbrica.
+- [`docs/guia-demostracion-v1.0.md`](docs/guia-demostracion-v1.0.md): pasos de exposición y comandos PowerShell.
+- [`docs/guia-evidencias-v1.0.md`](docs/guia-evidencias-v1.0.md): capturas que aún deben obtenerse manualmente.
+- [`docs/evidencia-pruebas-v1.0.md`](docs/evidencia-pruebas-v1.0.md): resultado comprobado de pruebas.
+- [`Prototipo/docs/analisis-dependencias.md`](Prototipo/docs/analisis-dependencias.md): árbol Maven y auditoría OWASP.
+- [`Prototipo/docs/contratos-matricula-y-concurrencia.md`](Prototipo/docs/contratos-matricula-y-concurrencia.md): contratos y concurrencia.
 
 ## Licencia
 

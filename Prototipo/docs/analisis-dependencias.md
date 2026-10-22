@@ -1,57 +1,52 @@
-# Análisis de dependencias y auditoría
+# Análisis de dependencias v1.0
 
-## Alcance y procedimiento
+## Procedimiento
 
-El proyecto mantiene Java 21, Spring Boot 4.1.0, Spring JDBC, H2 y PostgreSQL. Las dependencias directas se declaran en `pom.xml`; Spring Boot administra sus versiones mediante el BOM del parent. Para generar y revisar el árbol:
+Desde `C:\SeccionCritica\Prototipo` se ejecutó:
 
 ```powershell
-cd Prototipo
-mvn dependency:tree -DoutputFile=target/dependency-tree.txt
+.\mvnw.cmd dependency:tree "-DoutputFile=target/dependency-tree.txt"
 ```
 
-El árbol distingue dependencias directas de transitivas. Entre las transitivas relevantes aparecen Spring Framework, HikariCP, Thymeleaf, Jackson, Logback, JUnit, Mockito, AssertJ, Testcontainers y sus clientes de base de datos. El árbol generado en `target/` es un artefacto de compilación y no se versiona.
+El comando terminó con `BUILD SUCCESS`. El archivo en `target/` es generado y no debe versionarse.
 
 ## Dependencias directas
 
-| Dependencia | Uso | Alcance |
+| Coordenada / grupo | Uso | Alcance |
 |---|---|---|
-| `spring-boot-starter-webmvc` | Controladores MVC y servidor web | producción |
-| `spring-boot-starter-thymeleaf` | Vistas existentes | producción |
-| `spring-boot-starter-jdbc` | JDBC y transacciones | producción |
-| `spring-boot-starter-actuator` | health check existente | producción |
-| `h2` | Base demo y pruebas | runtime |
-| `postgresql` | Base de producción/integración | runtime |
-| `spring-boot-starter-test` | JUnit, Mockito y utilidades | test |
-| `spring-boot-starter-webmvc-test` | pruebas MVC | test |
-| `spring-boot-testcontainers` | integración Spring–Testcontainers | test |
-| `testcontainers-junit-jupiter` | ciclo de vida de contenedores | test |
-| `testcontainers-postgresql` | PostgreSQL real para pruebas | test |
+| `spring-boot-starter-webmvc` | MVC, servidor web y controladores | compile |
+| `spring-boot-starter-thymeleaf` | Vistas HTML | compile |
+| `spring-boot-starter-jdbc` | `JdbcClient`, transacciones y HikariCP | compile |
+| `spring-boot-starter-actuator` | `/actuator/health` | compile |
+| `resilience4j-circuitbreaker` 2.2.0 | Circuit breaker | compile |
+| `resilience4j-retry` 2.2.0 | Reintentos | compile |
+| `h2` | Demo y pruebas en memoria | runtime |
+| `postgresql` | Perfil y persistencia PostgreSQL | runtime |
+| `spring-boot-starter-test` | JUnit, Mockito, AssertJ y utilidades | test |
+| `spring-boot-starter-webmvc-test` | Pruebas MVC | test |
+| `spring-boot-testcontainers` | Integración Spring–Testcontainers | test |
+| `testcontainers-junit-jupiter` | Ciclo de vida JUnit | test |
+| `testcontainers-postgresql` | Contenedor PostgreSQL 17 | test |
 
-No se actualizaron versiones indiscriminadamente. El único agregado es el plugin de auditoría y no introduce una dependencia de runtime de la aplicación.
+## Transitivas observadas
+
+El árbol real incluye Spring Framework 7.0.8, Tomcat 11.0.22, HikariCP 7.0.2, Thymeleaf 3.1.5, Logback 1.5.34, SLF4J 2.0.18, Jackson 3.1.4, Micrometer 1.17.0, JUnit 6.0.3, Mockito 5.23.0, AssertJ 3.27.7, Awaitility 4.3.0, Testcontainers 2.0.5, Docker Java 3.7.1, H2 2.4.240 y PostgreSQL JDBC 42.7.11.
+
+La gestión centralizada del parent Spring Boot reduce divergencias de versión. Los riesgos que deben vigilarse son la superficie transitiva de web/Jackson/logging, el driver de base de datos y Docker Java utilizado por las pruebas. Esta revisión no inventa vulnerabilidades: el reporte OWASP no alcanzó un estado concluyente.
 
 ## OWASP Dependency-Check
 
-Se configuró `org.owasp:dependency-check-maven:12.1.0` en `pom.xml` sin asociarlo a una fase del ciclo de vida. Por ello, `test` y `package` siguen siendo normales; la auditoría se solicita explícitamente:
+El `pom.xml` configura `org.owasp:dependency-check-maven:12.1.0` bajo demanda, con formatos HTML y JSON, incluyendo el alcance de pruebas y umbral CVSS 7.0. Se intentó ejecutar:
 
 ```powershell
-cd Prototipo
-mvn org.owasp:dependency-check-maven:check
+.\mvnw.cmd org.owasp:dependency-check-maven:check
 ```
 
-El umbral está configurado en CVSS 7.0. La auditoría incluye el alcance de pruebas. Los informes HTML y JSON se generan en `target/`.
+La actualización NVD informó 413,340 registros, descargó 10,000 (aproximadamente 2%), mostró reintentos y no utilizó API key. La auditoría quedó inconclusa. No se afirma ausencia de vulnerabilidades ni se presenta un inventario CVE.
 
-## Resultado de auditoría
+## Límites
 
-En esta ejecución la auditoría sí se inició. Dependency-Check informó 413,320 registros NVD y descargó 10,000 antes de detenerse por el tiempo de actualización sin API key. No se generó un resultado concluyente ni un inventario de CVE; por tanto, no se declara “sin vulnerabilidades”. Debe repetirse con una API key o con tiempo suficiente y conservar los informes HTML/JSON resultantes.
-
-## Conflictos y licencias
-
-Spring Boot centraliza versiones de Spring, logging, JSON y testing; `dependency:tree` debe revisarse para detectar una misma coordenada con varias versiones. No se observó en la inspección del `pom.xml` una versión explícita que fuerce un conflicto, pero el árbol efectivo es la evidencia necesaria.
-
-Las licencias de las dependencias principales deben confirmarse con sus POM/NOTICE y el reporte legal del repositorio antes de publicar. Spring Boot, H2, PostgreSQL JDBC, JUnit, Mockito, Testcontainers y OWASP Dependency-Check son proyectos de licencias permisivas o de uso habitual, pero esta revisión no sustituye una verificación legal completa de todas las transitivas.
-
-## Limitaciones
-
-- La auditoría depende de red y de la disponibilidad de la base de vulnerabilidades de NVD.
-- No se añadieron versiones manuales para “corregir” riesgos que no hayan sido confirmados por el reporte.
-- Docker no estuvo disponible durante la línea base; las dependencias PostgreSQL de Testcontainers quedaron omitidas en pruebas.
+- El árbol de dependencias sí fue generado con éxito.
+- La auditoría OWASP requiere una nueva ejecución con red estable, API key o tiempo suficiente.
+- Las licencias transitivas requieren una revisión legal separada.
+- No se agregan archivos de `target/` al repositorio.
