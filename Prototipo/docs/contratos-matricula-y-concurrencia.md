@@ -52,7 +52,7 @@ La base de datos mantiene durante y después de cada transacción:
 - El número de matrículas confirmadas de una sección no excede su cupo consumido (`cupo_maximo - cupo_disponible`).
 - Las matrículas confirmadas de un estudiante no violan créditos ni cruces práctica–práctica, porque las escrituras del mismo estudiante se serializan.
 
-Las precondiciones y reglas de negocio se expresan con validaciones y excepciones de dominio; no se usa `assert` de Java, que puede deshabilitarse en producción. Los invariantes persistentes se respaldan en SQL y en las pruebas de integración.
+Los contratos están escritos en el código: Javadoc Pre/Post/invariantes en `MatriculaCommandService.matricular` y `retirar`, precondición de IDs positivos en `MatriculaService` (validada antes de llamar al servicio externo), invariante de cupos en el constructor del record `Seccion` y postcondición de "una fila afectada" en `SeccionRepository.ajustarCupo`. Las precondiciones y reglas de negocio se expresan con validaciones y excepciones de dominio; no se usa `assert` de Java, que puede deshabilitarse en producción. Los invariantes persistentes se respaldan en SQL y en las pruebas de integración.
 
 ## Separación Command–Query
 
@@ -66,14 +66,14 @@ La prueba `ultimoCupoTieneUnSoloGanador` coordina cinco estudiantes con `CountDo
 
 ## Verificación realizada
 
-Ejecutado en H2 con Java 21.0.12 y Spring Boot 4.1.0 después de ampliar la carrera:
+Ejecutado con Java 21 y Spring Boot 4.1.0, con Docker activo (H2 y PostgreSQL 17 vía Testcontainers):
 
 ```text
-Tests run: 33, Failures: 0, Errors: 0, Skipped: 12
+Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 
-La carrera H2 se repitió cinco veces sin fallos durante esta auditoría. PostgreSQL se ejecuta mediante Testcontainers y se omite automáticamente cuando Docker no está disponible; en la ejecución documentada se omitieron 12 casos. Esa omisión no constituye evidencia de ejecución contra PostgreSQL.
+La carrera H2 se repitió cinco veces sin fallos durante esta auditoría. PostgreSQL se ejecuta mediante Testcontainers y se omite automáticamente cuando Docker no está disponible; en la ejecución documentada se ejecutaron los 12 casos contra PostgreSQL 17.
 
 ## Tres contratos verificables
 

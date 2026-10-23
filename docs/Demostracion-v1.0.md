@@ -11,7 +11,7 @@ java -version
 .\mvnw.cmd clean verify
 ```
 
-Resultado esperado: `BUILD SUCCESS`, 33 pruebas, 0 fallos, 0 errores y 0 omitidas. La ejecución vigente usa PostgreSQL 17 mediante Testcontainers; requiere Docker operativo.
+Resultado esperado: `BUILD SUCCESS`, 37 pruebas, 0 fallos, 0 errores y 0 omitidas. La ejecución vigente usa PostgreSQL 17 mediante Testcontainers; requiere Docker operativo.
 Evidencia: captura de la consola con el comando y el resumen de pruebas.  
 
 ## 2. Ejecutar el prototipo
@@ -97,7 +97,7 @@ Set-Location C:\SeccionCritica\Prototipo
 Get-ChildItem .\target\surefire-reports\*.txt | Get-Content
 ```
 
-Resultado esperado: 33 pruebas y `BUILD SUCCESS`. En la salida o en Docker Desktop debe observarse el contenedor `postgres:17` durante `MatriculaServicePostgresTest`.  
+Resultado esperado: 37 pruebas y `BUILD SUCCESS`. En la salida o en Docker Desktop debe observarse el contenedor `postgres:17` durante `MatriculaServicePostgresTest`.  
 Evidencia: consola Maven y contenedor PostgreSQL.  
 
 ## 8. Manejo de errores y resiliencia

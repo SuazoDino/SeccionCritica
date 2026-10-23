@@ -36,7 +36,10 @@ public class SeccionRepository {
                 .param("ids", seccionIds).query(Sesion.class).list();
     }
 
+    /** Postcondición: se modificó exactamente una fila; si no, la transacción del comando se revierte. */
     public void ajustarCupo(long id, int delta) {
-        db.sql("UPDATE seccion SET cupo_disponible = cupo_disponible + ? WHERE id = ?").params(delta, id).update();
+        int filas = db.sql("UPDATE seccion SET cupo_disponible = cupo_disponible + ? WHERE id = ?").params(delta, id).update();
+        if (filas != 1)
+            throw new IllegalStateException("Se esperaba ajustar el cupo de una sección y se afectaron " + filas);
     }
 }

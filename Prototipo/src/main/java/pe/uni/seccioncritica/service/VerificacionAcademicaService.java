@@ -50,15 +50,16 @@ public class VerificacionAcademicaService {
         try {
             CompletableFuture.runAsync(llamada, executor).get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             log.debug("evento=verificacion_academica_exitosa estudianteId={}", estudianteId);
-        } catch (CallNotPermittedException e) {
-            rechazar(estudianteId, "circuit_breaker_abierto", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             rechazar(estudianteId, "interrumpida", e);
         } catch (TimeoutException e) {
             rechazar(estudianteId, "timeout", e);
         } catch (ExecutionException e) {
-            rechazar(estudianteId, "servicio_no_disponible", e.getCause());
+            // El rechazo del circuito ocurre dentro del hilo de la llamada y llega envuelto.
+            var causa = e.getCause() instanceof CallNotPermittedException
+                    ? "circuit_breaker_abierto" : "servicio_no_disponible";
+            rechazar(estudianteId, causa, e.getCause());
         }
     }
 

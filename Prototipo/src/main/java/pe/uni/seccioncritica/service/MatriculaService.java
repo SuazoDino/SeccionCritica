@@ -67,7 +67,10 @@ public class MatriculaService {
     public List<EventoAgenda> agenda(long estudianteId) { return matriculas.agenda(estudianteId); }
     public int creditos(long estudianteId) { return matriculas.creditos(estudianteId); }
 
+    /** Pre: identificadores positivos. Se valida antes de consultar al servicio externo. */
     public void matricular(long estudianteId, long seccionId) {
+        requerirId("el estudiante", estudianteId);
+        requerirId("la sección", seccionId);
         try {
             verificacion.verificar(estudianteId);
             comandos.matricular(estudianteId, seccionId);
@@ -80,6 +83,8 @@ public class MatriculaService {
     }
 
     public void retirar(long estudianteId, long seccionId) {
+        requerirId("el estudiante", estudianteId);
+        requerirId("la sección", seccionId);
         try {
             comandos.retirar(estudianteId, seccionId);
         } catch (MatriculaRechazadaException e) {
@@ -88,5 +93,10 @@ public class MatriculaService {
             throw e;
         }
         log.info("evento=retiro_confirmado estudianteId={} seccionId={}", estudianteId, seccionId);
+    }
+
+    /** Un identificador no positivo nunca existe en la base: se rechaza sin abrir transacción. */
+    private static void requerirId(String recurso, long id) {
+        if (id <= 0) throw new RecursoNoEncontradoException(recurso, id);
     }
 }

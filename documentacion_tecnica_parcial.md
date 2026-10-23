@@ -1,17 +1,13 @@
-# Aviso de vigencia
-
-Este documento conserva el análisis histórico de la etapa parcial. Para la arquitectura, resultados y alcance reales de v1.0, usar [docs/informe-final-v1.0.md](docs/informe-final-v1.0.md). Las secciones sobre API REST, JPA, `ReglaMatricula`, perfiles institucionales o herramientas no presentes en el prototipo son antecedentes o propuestas, no capacidades entregadas.
-
----
-
 # Documento técnico parcial — Sección Crítica
 
 **Curso:** Construcción de Software II – SW707 | Universidad Nacional de Ingeniería
 **Entregable:** v1.0 (Examen Parcial)
-**Integrantes:** *Suazo Zanabria Dino, Chavez Oliva Carlos *
-**Docente:** *Anibal Guillen*
-**Fecha:** *2026-10-10*
-**Repositorio:** *[enlace a GitHub]*
+**Integrantes:** Suazo Zanabria Dino, Chavez Oliva Carlos
+**Docente:** Anibal Guillen
+**Fecha:** 2026-10-23
+**Repositorio:** <https://github.com/SuazoDino/SeccionCritica>
+
+Este documento describe **solo lo implementado y verificado en v1.0**. Las propuestas para v2.0 se listan aparte en la sección 11. El informe consolidado con la matriz de rúbrica está en [`docs/informe-final-v1.0.md`](docs/informe-final-v1.0.md).
 
 ---
 
@@ -19,61 +15,49 @@ Este documento conserva el análisis histórico de la etapa parcial. Para la arq
 
 ### 1.1 Problema
 
-Durante la apertura de la matrícula universitaria, miles de estudiantes intentan inscribirse al mismo tiempo en secciones de curso con cupos limitados. Sin un control adecuado de concurrencia en el sistema que gestiona esos cupos, se producen fallas estructurales:
+Durante la apertura de la matrícula universitaria, muchos estudiantes intentan inscribirse al mismo tiempo en secciones con cupos limitados. Sin control de concurrencia se producen:
 
-- **Sobrecupo**: más estudiantes matriculados que vacantes disponibles en una sección.
-- **Reglas académicas ignoradas**: matrículas que no respetan prerrequisitos aprobados o el límite máximo de créditos por ciclo.
-- **Cruces de horario no detectados**: un estudiante queda matriculado en dos secciones con horarios superpuestos.
-- **Degradación o caída del sistema** justo en el momento de mayor demanda (la "hora de apertura").
+- **Sobrecupo**: más matriculados que vacantes en una sección.
+- **Reglas académicas ignoradas**: prerrequisitos no aprobados o exceso de créditos.
+- **Cruces de horario** no detectados entre prácticas.
+- **Degradación o caída** cuando un servicio externo falla justo en la hora de mayor demanda.
 
-A esto se suma un problema de reúso: cada institución suele reconstruir desde cero su propio sistema de matrícula, con reglas distintas (créditos, prerrequisitos, fases de matrícula, paquetes de cursos), repitiendo los mismos errores de concurrencia y de diseño.
+### 1.2 Usuarios y actores en v1.0
 
-### 1.2 Usuarios y actores
-
-| Actor | Rol en el sistema |
+| Actor | Rol en el prototipo |
 |---|---|
-| **Estudiante** | Consulta la oferta de secciones, se matricula o se retira de una sección. |
-| **Coordinador / secretaría académica** | Administra cursos, secciones, horarios y cupos; consulta el estado de la matrícula. |
-| **Administrador institucional** | Configura las reglas académicas específicas de su institución (perfil de matrícula). |
-| **Desarrollador / comunidad open source** | Integra, extiende o adapta el motor a un nuevo contexto institucional. |
-| **Servicio externo de verificación académica** (simulado) | Sistema consumido por la API para validar deudas o situación académica del estudiante antes de confirmar la matrícula. |
+| **Estudiante** | Elige su perfil (demo, sin autenticación), consulta la oferta habilitada, se matricula y se retira. |
+| **Servicio externo de verificación académica** (simulado) | Confirma que el estudiante puede matricularse antes de abrir la transacción. Puede configurarse para fallar o tardar. |
 
 ### 1.3 Objetivo
 
-Construir un motor de matrícula de código abierto y robusto, con reglas académicas configurables y extensibles, que garantice en todo momento que no se excedan los cupos, que se respeten prerrequisitos, créditos y horarios, y que mantenga un rendimiento estable durante los picos de demanda.
+Construir un núcleo de matrícula que garantice que nunca se excede el cupo de una sección, que respete prerrequisitos, créditos y cruces de práctica, y que se degrade de forma controlada si el servicio externo falla.
 
 ---
 
-## 2. Alcance y requisitos principales
+## 2. Alcance y requisitos
 
-### 2.1 Alcance de la versión v1.0
+### 2.1 Alcance implementado en v1.0
 
-- Registro de cursos, secciones, horarios y cupos.
-- Registro de estudiantes con su historial de cursos aprobados.
-- Matrícula de un estudiante en una sección, con validación de:
-  - Prerrequisitos aprobados.
-  - Créditos matriculados ≤ créditos máximos permitidos.
-  - Ausencia de cruce de horarios con otras secciones ya matriculadas.
-- Retiro de una matrícula, con liberación inmediata del cupo.
-- Consulta de disponibilidad de cupos en tiempo real.
-- Consulta del historial y la carga académica de cada estudiante.
-- Exposición de una API REST documentada para que cualquier institución pueda integrar el motor.
+- Flujo completo por interfaz web: seleccionar estudiante → ver oferta habilitada → matricularse → ver agenda y créditos → retirarse.
+- Validaciones de matrícula: curso ya aprobado, matrícula duplicada en el mismo curso, cupo disponible, prerrequisito aprobado, máximo de créditos y cruces práctica–práctica.
+- Retiro con liberación inmediata del cupo.
+- Verificación académica externa (simulada) protegida con timeout, reintentos y circuit breaker.
+- Ejecución con H2 en memoria (demo) o con PostgreSQL 17 (perfil `postgres`, Docker Compose).
 
-### 2.2 Fuera de alcance en v1.0 (diferido a v2.0 o excluido)
+### 2.2 Fuera de alcance en v1.0
 
-- Internacionalización de la interfaz (prevista para v2.0).
-- Máquina de estados completa de la matrícula (solicitada → confirmada → en lista de espera → retirada): en v1.0 se maneja un ciclo simplificado (confirmada / retirada); el modelo table-driven completo se implementa en v2.0.
-- Contenerización completa del stack (Docker Compose se usa en desarrollo; el despliegue productivo es parte del alcance del final).
-- Pagos, notificaciones push, reportes administrativos avanzados.
+API REST/OpenAPI, autenticación y CSRF, reglas intercambiables por institución, lista de espera, historial de retiros, migraciones versionadas e integración real con un servicio externo.
 
-### 2.3 Requisitos no funcionales relevantes
+### 2.3 Requisitos no funcionales verificados
 
-| Requisito | Criterio de aceptación |
-|---|---|
-| Consistencia de cupos | Bajo ninguna condición de concurrencia el número de matriculados confirmados debe superar el cupo de la sección. |
-| Disponibilidad ante fallas externas | El sistema debe degradarse controladamente (no caerse) si el servicio de verificación académica falla o responde con latencia alta. |
-| Rendimiento bajo carga | El sistema debe sostener un pico simulado de solicitudes concurrentes sobre una misma sección sin pérdida de consistencia. *[completar con el umbral medido]* |
-| Extensibilidad | Las reglas académicas (prerrequisitos, créditos, horarios) deben poder sustituirse sin modificar el núcleo del motor. |
+| Requisito | Criterio | Evidencia |
+|---|---|---|
+| Consistencia de cupos | Con N solicitudes simultáneas por la última vacante gana exactamente una. | `ultimoCupoTieneUnSoloGanador` en H2 y PostgreSQL |
+| Degradación controlada | Si la verificación externa falla o tarda, se responde 503 y no se consume cupo. | `VerificacionAcademicaServiceTest`, `ServicioExternoCaidoTest` |
+| Sin trazas al usuario | Cualquier error termina en `error.html` con un mensaje claro. | `ManejadorErrores`, `PaginasTest` |
+
+No se midió rendimiento sostenido (latencia p95/p99 ni throughput).
 
 ---
 
@@ -81,206 +65,214 @@ Construir un motor de matrícula de código abierto y robusto, con reglas acadé
 
 ### 3.1 Vista general
 
-El sistema sigue una arquitectura en capas, con el núcleo de negocio desacoplado de las reglas académicas específicas de cada institución:
-
 ```
-┌─────────────────────────────────────────────┐
-│              API REST (Spring MVC)           │
-│   Controladores: Matrícula, Secciones, ...   │
-└───────────────────┬───────────────────────────┘
-                     │
-┌───────────────────▼───────────────────────────┐
-│              Capa de Servicio                 │
-│  MatriculaService · SeccionService · ...      │
-│  (orquesta validaciones, locking, resiliencia)│
-└───────────────────┬───────────────────────────┘
-                     │
-      ┌──────────────┼──────────────┐
-      ▼              ▼              ▼
-┌───────────┐  ┌────────────┐  ┌──────────────┐
-│ Reglas     │  │ Persistencia│  │ Cliente      │
-│ académicas │  │ (JPA /      │  │ resiliente   │
-│ (interfaz  │  │ PostgreSQL) │  │ (servicio    │
-│ + perfiles)│  │             │  │ externo)     │
-└───────────┘  └────────────┘  └──────────────┘
+Navegador (Thymeleaf + matricula.js)
+        │  GET /oferta, /matriculas · POST /matricular, /retirar
+        ▼
+controller/  MatriculaController · ManejadorErrores (@ControllerAdvice)
+        │
+        ▼
+service/     MatriculaService (fachada: precondiciones, logging)
+        ├──► VerificacionAcademicaService ──► VerificadorAcademico (stub demo)
+        │       timeout · retry · circuit breaker (Resilience4j)
+        └──► MatriculaCommandService (@Transactional, SELECT … FOR UPDATE)
+        │
+        ▼
+repository/  JdbcClient: Estudiante · Curso · Seccion · Matricula
+        │
+        ▼
+H2 (demo) / PostgreSQL 17 — schema.sql con CHECK, PK y FK
 ```
 
-### 3.2 Decisiones clave y justificación
+### 3.2 Decisiones clave
 
-| Decisión | Alternativa considerada | Justificación |
+| Decisión | Alternativa | Justificación |
 |---|---|---|
-| Spring Boot + Java | Node.js/Express | Tipado estático, soporte maduro de concurrencia (JPA locking, `ExecutorService`) y del curso. |
-| PostgreSQL con locking a nivel de fila | NoSQL con consistencia eventual | El problema exige consistencia fuerte sobre el cupo; `SELECT FOR UPDATE` y columnas de versión son nativos en PostgreSQL. |
-| Reglas académicas como interfaz (`ReglaMatricula`) | Reglas embebidas en el servicio | Permite que cada institución sustituya o componga reglas sin tocar el núcleo (ver sección 4). |
-| Resilience4j para el servicio externo | Reintentos manuales | Librería madura, declarativa, con circuit breaker y métricas integradas a Actuator. |
-| API REST documentada con OpenAPI | GraphQL | Simplicidad de integración para instituciones externas; alineado al requisito de "mecanismo de integración apropiado". |
+| Spring Boot 4.1 + Java 21 | Node.js | Tipado estático, transacciones declarativas, hilos virtuales. |
+| JDBC (`JdbcClient`) con SQL explícito | JPA/Hibernate | El `SELECT … FOR UPDATE` y el orden de bloqueos quedan visibles y auditables. |
+| Bloqueo pesimista por fila | Bloqueo optimista con versión | Bajo alta contención sobre la misma sección evita reintentos en cascada (ver §8.3). |
+| Verificación externa **antes** de la transacción | Dentro de la transacción | Una falla o latencia externa no retiene bloqueos ni consume cupos. |
+| Resilience4j (circuit breaker + retry) | Reintentos manuales | Librería madura; configuración explícita y probada. |
 
-### 3.3 Modelo de datos (resumen)
+### 3.3 Modelo de datos
 
-Entidades principales: `Curso`, `Seccion` (con `cupoMaximo` y `cupoDisponible`), `Estudiante`, `HistorialAcademico`, `Matricula` (relación Estudiante–Sección con estado y marca de tiempo), `ReglaMatricula` (configuración por institución).
-
-*[completar con el diagrama entidad-relación final una vez estabilizado el modelo]*
+Tablas en [`schema.sql`](Prototipo/src/main/resources/schema.sql): `estudiante` (`max_creditos > 0`), `curso` (`creditos > 0`, prerrequisito opcional), `aprobado`, `seccion` (`CHECK (cupo_disponible BETWEEN 0 AND cupo_maximo)`), `matricula` (PK compuesta estudiante–sección) y `sesion` (teoría/práctica, día 1–7, de 07:00 a 22:00, `fin > inicio`).
 
 ---
 
 ## 4. Dependencias y reúso
 
-### 4.1 Construcción PARA el reúso
+### 4.1 Construcción con reúso
 
-El núcleo del motor se diseña como una librería agnóstica a la institución que lo usa. Las reglas académicas (prerrequisitos, créditos máximos, cruce de horarios) se modelan como una interfaz:
-
-```java
-public interface ReglaMatricula {
-    ResultadoValidacion validar(Estudiante estudiante, Seccion seccion, ContextoMatricula contexto);
-}
-```
-
-Cada institución compone su propio conjunto de reglas (un "perfil de matrícula") sin modificar el código del núcleo. Esto evita la sobre-ingeniería de construir un framework universal: el motor cubre un modelo base (cursos, secciones, cupos, reglas configurables) y demuestra su adaptabilidad con **dos perfiles de prueba distintos** (por ejemplo, matrícula por créditos libres frente a matrícula por paquete de cursos del ciclo).
-
-### 4.2 Construcción CON reúso (dependencias de terceros)
-
-| Dependencia | Propósito | Gestión de riesgo |
+| Dependencia directa | Propósito | Alcance |
 |---|---|---|
-| `spring-boot-starter-web` | API REST | Versión fijada en `pom.xml`, actualizada mediante Dependabot/Renovate. |
-| `spring-boot-starter-data-jpa` | Persistencia y locking | — |
-| `postgresql` (driver JDBC) | Conexión a BD | — |
-| `resilience4j-spring-boot3` | Resiliencia | — |
-| `springdoc-openapi` | Documentación de API | — |
-| `micrometer-registry-prometheus` | Métricas | — |
+| `spring-boot-starter-webmvc`, `-thymeleaf` | Controladores y vistas | compile |
+| `spring-boot-starter-jdbc` | `JdbcClient`, transacciones, HikariCP | compile |
+| `spring-boot-starter-actuator` | `/actuator/health` | compile |
+| `resilience4j-circuitbreaker` / `-retry` 2.2.0 | Resiliencia del borde externo | compile |
+| `h2`, `postgresql` | Bases de datos | runtime |
+| `spring-boot-starter-test`, `-webmvc-test`, Testcontainers | Pruebas | test |
 
-### 4.3 Análisis de dependencias transitivas y riesgos
+Las versiones de Spring, logging, Jackson y testing las fija el parent `spring-boot-starter-parent:4.1.0`, lo que evita divergencias entre transitivas. Resilience4j y el plugin OWASP fijan su versión explícitamente.
 
-*[completar]* ejecutar `mvn dependency:tree` y registrar aquí las dependencias transitivas relevantes, además de un análisis con una herramienta de verificación de vulnerabilidades conocidas (por ejemplo, OWASP Dependency-Check o la API de OSV.dev) sobre el árbol resultante. Documentar cualquier vulnerabilidad encontrada y la decisión tomada (actualizar versión, mitigar o aceptar el riesgo).
+### 4.2 Construcción para el reúso
+
+- `VerificadorAcademico` es una interfaz: el stub de demostración puede sustituirse por un cliente real sin tocar `VerificacionAcademicaService`.
+- `ReglasMatriculaTestBase` concentra las 12 pruebas de reglas y concurrencia; `MatriculaServiceH2Test` y `MatriculaServicePostgresTest` la reutilizan cambiando solo la base de datos.
+
+### 4.3 Dependencias transitivas y riesgos
+
+El árbol real (`mvnw dependency:tree`) incluye Spring Framework 7.0.8, Tomcat 11.0.22, HikariCP 7.0.2, Thymeleaf 3.1.5, Logback 1.5.34, Jackson 3.1.4, Micrometer 1.17.0, H2 2.4.240, PostgreSQL JDBC 42.7.11, y en pruebas JUnit 6.0.3, Mockito 5.23.0, Testcontainers 2.0.5 y Docker Java 3.7.1. El detalle está en [`Prototipo/docs/analisis-dependencias.md`](Prototipo/docs/analisis-dependencias.md).
+
+| Riesgo | Mitigación |
+|---|---|
+| Vulnerabilidades en la superficie web (Tomcat, Jackson, Logback) | Versiones gestionadas por el parent de Spring Boot; actualizar el parent ante avisos de seguridad. |
+| Driver JDBC y H2 | H2 solo se usa en demo y pruebas; PostgreSQL JDBC se actualiza con el parent. |
+| Docker Java / Testcontainers | Solo en alcance `test`; no se empaqueta en el JAR. |
+| CVEs desconocidas | OWASP Dependency-Check 12.1.0 configurado (umbral CVSS 7.0). La primera ejecución quedó **inconclusa** porque la descarga de la base NVD no terminó sin API key. No se afirma ausencia de vulnerabilidades. |
 
 ### 4.4 Licencias
 
-El proyecto se publicará bajo licencia Apache 2.0. Antes de la publicación final se verificará la compatibilidad de esta licencia con la de cada dependencia directa y transitiva relevante, para evitar conflictos tipo "contaminación" por licencias copyleft (GPL).
+El proyecto se publica bajo Apache 2.0 ([`LICENSE`](LICENSE)). Las dependencias directas usan Apache 2.0, EPL/MPL (H2), BSD-2 (PostgreSQL JDBC) o MIT (Testcontainers), todas compatibles; no hay dependencias GPL.
 
 ---
 
 ## 5. Problemas de runtime
 
-El curso exige identificar y analizar al menos dos problemas de tiempo de ejecución. Se documentan dos, ambos presentes en el diseño del motor:
+### 5.1 Condición de carrera por la última vacante
 
-### 5.1 Polimorfismo y enlace dinámico en la selección de reglas académicas
+**Problema.** Dos transacciones leen `cupo_disponible = 1` a la vez, ambas deciden que hay espacio y ambas insertan la matrícula: sobrecupo. Lo mismo ocurre con un estudiante que envía dos solicitudes simultáneas: cada una ve los créditos y la agenda anteriores y juntas superan el máximo o se cruzan.
 
-Las reglas académicas (`ValidadorPrerrequisitos`, `ValidadorCreditos`, `ValidadorHorario`, …) implementan la interfaz `ReglaMatricula`. El `MatriculaService` no conoce en tiempo de compilación qué implementación concreta se ejecutará: el runtime resuelve la llamada mediante enlace dinámico (V-Table), consultando la implementación real del objeto inyectado para el perfil institucional activo.
+**Análisis.** Una lectura previa a la escritura, sin bloqueo, no sirve: la ventana de carrera sigue abierta entre la lectura y el `UPDATE`.
 
-**Implicancia arquitectónica:** esta indirección habilita la extensibilidad (nuevas reglas sin modificar el código consumidor), pero tiene un costo de rendimiento no nulo (el compilador no puede hacer *inlining* de la llamada) y debe medirse si se vuelve relevante bajo el pico de carga de la apertura de matrícula.
+**Solución.** [`MatriculaCommandService`](Prototipo/src/main/java/pe/uni/seccioncritica/service/MatriculaCommandService.java) abre una transacción y bloquea con `SELECT … FOR UPDATE`, **siempre en el orden estudiante → sección**. El bloqueo de la sección serializa el consumo de cupo, el del estudiante serializa sus créditos y horarios, y el orden fijo evita interbloqueos. El `CHECK` de la tabla `seccion` actúa como última barrera.
 
-**Mitigación:** el conjunto de reglas por perfil se resuelve una sola vez al iniciar la solicitud de matrícula (no en cada validación individual), y se mantiene un conjunto acotado de implementaciones conocidas en tiempo de compilación — se evita reflexión para este mecanismo, precisamente para no sumar el costo adicional de pérdida de *inlining* que sí tiene la reflexión.
+**Evidencia.** `ultimoCupoTieneUnSoloGanador`, `solicitudesDelMismoEstudianteRespetanElHorario` y `solicitudesDelMismoEstudianteRespetanLosCreditos`, en H2 y PostgreSQL.
 
-### 5.2 Carga de reglas configurables por institución (enlace tardío controlado)
+### 5.2 Contención de bloqueos y esperas indefinidas
 
-Para que una institución pueda activar un perfil de reglas distinto (por ejemplo, "créditos libres" vs. "paquete de ciclo") sin recompilar el sistema, el motor resuelve el perfil activo en tiempo de ejecución a partir de una configuración externa (ver sección de configuración, prevista para v2.0).
+**Problema.** Con bloqueo pesimista, en la hora pico las transacciones forman una cola por la misma fila. Si una se demora, el resto espera; sin límites, los hilos de Tomcat y las conexiones de HikariCP se agotan y el sistema completo deja de responder. El mismo efecto ocurre si el servicio externo tarda y la espera ocurre dentro de la transacción.
 
-**Riesgo de seguridad identificado:** si el mecanismo de selección de reglas aceptara, sin validar, un nombre de clase arbitrario proveniente de configuración externa para cargarla por reflexión (el patrón que hizo posible Log4Shell), un atacante con control sobre esa configuración podría forzar la carga de una clase maliciosa. Por eso, en el diseño del motor:
+**Solución.** Se acota cada espera en tiempo de ejecución:
 
-- El conjunto de implementaciones de `ReglaMatricula` disponibles es una lista cerrada, registrada explícitamente en el contexto de Spring (no se cargan clases arbitrarias por nombre de cadena de texto desde configuración externa).
-- La configuración externa solo selecciona **cuáles** reglas ya registradas componen el perfil activo, nunca **qué código** se ejecuta.
+| Límite | Valor | Dónde |
+|---|---|---|
+| Espera por un bloqueo de fila (PostgreSQL) | 5 s | `SET lock_timeout` en [`application-postgres.properties`](Prototipo/src/main/resources/application-postgres.properties) |
+| Duración de la transacción de matrícula | 10 s | `@Transactional(timeout = 10)` |
+| Obtener una conexión del pool | 5 s (pool de 20) | `spring.datasource.hikari.*` |
+| Llamada al servicio externo | 2 s, fuera de la transacción | `resiliencia.verificacion.timeout` |
 
-Esta decisión es una aplicación directa del principio visto en el curso: a mayor delegación de decisiones al runtime, mayor flexibilidad, pero también mayor superficie de ataque; el diseño limita deliberadamente esa superficie.
+Al vencer un límite, `MatriculaController` captura la `TransientDataAccessException` y devuelve al panel el mensaje "Hay muchas solicitudes en este momento y no se modificó nada"; la transacción se revierte. Como la verificación externa ocurre antes de abrir la transacción, su latencia nunca retiene bloqueos.
+
+**Límite del análisis.** No se hizo prueba de carga sostenida; los valores son conservadores y deben calibrarse con medición en v2.0.
 
 ---
 
 ## 6. Contratos y programación defensiva
 
-### 6.1 Diseño por contrato (Design by Contract)
+### 6.1 Diseño por contrato
+
+Los contratos están escritos en el código (Javadoc `Pre`/`Post`/invariantes) y se hacen cumplir con excepciones de dominio, no con `assert` (que puede desactivarse en producción). El detalle está en [`Prototipo/docs/contratos-matricula-y-concurrencia.md`](Prototipo/docs/contratos-matricula-y-concurrencia.md).
 
 | Componente | Precondición | Postcondición | Invariante |
 |---|---|---|---|
-| `MatriculaService.matricular()` | La sección existe y está activa; el estudiante existe. | Si la operación retorna éxito, existe una `Matricula` confirmada para ese estudiante y esa sección. | `matriculados ≤ cupoMaximo` de la sección, en todo momento. |
-| `MatriculaService.retirar()` | Existe una matrícula confirmada para ese estudiante y esa sección. | El cupo de la sección se incrementa en 1; el estado de la matrícula pasa a "retirada". | El cupo liberado nunca excede el cupo máximo original. |
-| `ValidadorCreditos.validar()` | El historial académico del estudiante está disponible. | Retorna un resultado explícito (válido/inválido con motivo), nunca `null`. | `creditosMatriculados ≤ creditosMaximoPermitido`. |
-| `ValidadorHorario.validar()` | Las secciones ya matriculadas del estudiante tienen horario definido. | Retorna un resultado explícito. | Ninguna sección confirmada se superpone en horario con otra confirmada del mismo estudiante. |
+| `MatriculaService.matricular` / `MatriculaCommandService.matricular` | IDs positivos (si no, `RecursoNoEncontradoException` sin consultar al servicio externo); estudiante y sección existen; verificación externa aprobada. | Éxito: una única matrícula estudiante–sección y el cupo baja en 1. Rechazo: excepción de dominio y rollback; nada cambia. | `0 ≤ cupo_disponible ≤ cupo_maximo`; créditos ≤ `max_creditos`; sin cruces práctica–práctica. |
+| `MatriculaService.retirar` / `MatriculaCommandService.retirar` | IDs positivos; existe una matrícula activa para el par. | Éxito: la matrícula desaparece y el cupo sube exactamente en 1. Retiro repetido: se rechaza sin liberar otro cupo. | El cupo liberado nunca supera `cupo_maximo` (CHECK + rollback). |
+| `Seccion` (record) | — | — | El constructor rechaza `cupoMaximo ≤ 0` o `cupoDisponible` fuera de `[0, cupoMaximo]` con `IllegalStateException`. |
+| `SeccionRepository.ajustarCupo` | La sección está bloqueada por la transacción actual. | Se modificó exactamente una fila; si no, se lanza excepción y la transacción se revierte. | — |
+| `MatriculaService.oferta` | El estudiante existe. | Solo cursos no aprobados con prerrequisito cumplido; sin efectos laterales. | — |
 
-Estos contratos se verifican con aserciones en desarrollo/pruebas y con validaciones explícitas (excepciones de dominio) en producción, siguiendo el principio de "falla rápido y explícito" en lugar de dejar que un estado inconsistente se propague silenciosamente.
+**Pruebas de contrato:** `contratosRechazadosNoCambianMatriculasNiCupos`, `retiroHaceRollbackSiFallaLaLiberacionDelCupo`, `inexistentesNoAlteranLosCupos`, `ofertaFiltraPrerrequisitosYAprobados` y `SeccionTest`.
 
 ### 6.2 Programación defensiva
 
-- **Entradas no confiables**: todo dato que llega por la API (identificador de sección, de estudiante, parámetros de paginación) se valida en el borde del sistema (capa de controlador) antes de llegar a la capa de servicio.
-- **Validación de datos de carga** (cuando el motor recibe catálogos de cursos o perfiles institucionales desde archivos externos): se valida estructura, tipos y rangos antes de persistir, rechazando archivos malformados con un mensaje explícito en vez de fallar de forma ambigua.
-- **Nunca confiar en el estado del cliente**: el cupo disponible que ve el estudiante en pantalla es informativo; la validación real y autoritativa ocurre siempre en el servidor, en la transacción de matrícula.
+- **Entradas no confiables.** Los parámetros `estudiante` y `seccion` llegan del formulario. Un valor ausente o no numérico se convierte en 400 con un mensaje claro (`MethodArgumentTypeMismatchException` en `ManejadorErrores`); un ID no positivo o inexistente, en 404.
+- **No confiar en el cliente.** El cupo que muestra la pantalla es informativo: el servidor vuelve a leer y bloquear la sección dentro de la transacción. El botón se desactiva al enviar (`matricula.js`), pero la unicidad la garantiza la PK de `matricula`.
+- **Defensa en profundidad en la base.** `CHECK` de cupos, créditos y horarios, PK compuesta y FK. Aunque falle el código, la base rechaza el estado inválido.
+- **SQL parametrizado.** Todas las consultas usan `JdbcClient` con parámetros; no se concatena entrada del usuario.
+- **Sin filtración de información.** `server.error.include-message=never` e `include-stacktrace=never`.
 
 ---
 
-## 7. Estrategia de errores y excepciones
+## 7. Estrategia de errores, excepciones y logging
 
-### 7.1 Jerarquía de excepciones de dominio
+### 7.1 Jerarquía de excepciones
 
 ```
 RuntimeException
-└── SeccionCriticaException (excepción base del dominio)
-    ├── CupoNoDisponibleException        (409 Conflict)
-    ├── PrerrequisitoNoCumplidoException  (422 Unprocessable Entity)
-    ├── CreditosExcedidosException        (422 Unprocessable Entity)
-    ├── CruceDeHorarioException           (422 Unprocessable Entity)
-    ├── RecursoNoEncontradoException      (404 Not Found)
-    └── ServicioExternoNoDisponibleException (503 Service Unavailable)
+└── SeccionCriticaException (abstracta)
+    ├── MatriculaRechazadaException          → vuelve al panel con el motivo (regla de negocio)
+    │   ├── CupoNoDisponibleException
+    │   ├── PrerrequisitoNoCumplidoException
+    │   ├── CreditosExcedidosException
+    │   └── CruceDeHorarioException
+    ├── RecursoNoEncontradoException         → 404, error.html
+    └── ServicioExternoNoDisponibleException → 503, error.html
 ```
 
 ### 7.2 Política
 
-- Las excepciones de dominio son **específicas y accionables**: cada una incluye el motivo exacto de rechazo, nunca un mensaje genérico de "error interno" cuando la causa es una regla de negocio.
-- Un `@ControllerAdvice` centraliza el mapeo de excepciones de dominio a respuestas HTTP consistentes (código, mensaje, marca de tiempo, identificador de traza).
-- Las excepciones técnicas no controladas (por ejemplo, fallas de conexión a base de datos) se capturan en el borde del sistema, se registran con el nivel `ERROR` y el stack trace completo, y se traducen a una respuesta genérica 500 sin exponer detalles internos al cliente.
-- **Logging estructurado**: cada rechazo de matrícula por regla de negocio se registra en nivel `WARN` con el identificador de estudiante, sección y regla que falló, para poder auditar patrones de rechazo sin necesidad de reproducir el caso manualmente.
+| Tipo de falla | Tratamiento | Respuesta al usuario | Log |
+|---|---|---|---|
+| Regla de negocio | Rollback y redirección al panel | Mensaje específico (p. ej. "No quedan vacantes") | `WARN evento=matricula_rechazada … regla=… motivo=…` |
+| Contención transitoria de la base | Rollback | "Intenta nuevamente en unos segundos" | `WARN Contención al …` |
+| Recurso inexistente / parámetro inválido | `ManejadorErrores` | 404 / 400 en `error.html` | `WARN evento=recurso_no_encontrado` |
+| Servicio externo caído, lento o circuito abierto | Rechazo antes de la transacción | 503 en `error.html` | `WARN evento=verificacion_academica_fallida causa=timeout\|servicio_no_disponible\|circuit_breaker_abierto` |
+| Falla de base de datos | `ManejadorErrores` | 503 genérico | `ERROR` con stack trace |
+| Error inesperado | `ManejadorErrores` | 500 genérico, sin trazas | `ERROR` con stack trace |
+
+Los éxitos se registran en `INFO` (`evento=matricula_confirmada`, `evento=retiro_confirmado`). El formato `clave=valor` permite filtrar eventos sin reproducir el caso.
 
 ---
 
 ## 8. Concurrencia
 
-### 8.1 Escenario concreto
+### 8.1 Escenario
 
-**Condición de carrera:** dos (o más) estudiantes solicitan matricularse en la misma sección, que tiene exactamente un cupo disponible, al mismo tiempo. Sin control de concurrencia, ambas solicitudes podrían leer `cupoDisponible = 1`, decidir que hay espacio, y confirmar ambas matrículas — dejando la sección con un matriculado de más (sobrecupo).
+Cinco estudiantes solicitan **al mismo tiempo** la última vacante de la sección 4. Además, un mismo estudiante envía solicitudes simultáneas que, juntas, superarían sus créditos o cruzarían horarios.
 
 ### 8.2 Estrategias comparadas
 
-**Opción A — Locking pesimista (`SELECT ... FOR UPDATE`)**
-La transacción que intenta matricular bloquea la fila de la sección hasta confirmar o liberar. La segunda solicitud concurrente espera a que la primera transacción termine, y entonces lee el cupo ya actualizado.
+**A — Pesimista (`SELECT … FOR UPDATE`), implementada:**
 
 ```java
-@Transactional
-public Matricula matricular(Long estudianteId, Long seccionId) {
-    Seccion seccion = seccionRepository.findByIdForUpdate(seccionId); // SELECT ... FOR UPDATE
-    if (seccion.getCupoDisponible() <= 0) {
-        throw new CupoNoDisponibleException(seccionId);
-    }
-    // ... validar reglas académicas ...
-    seccion.decrementarCupo();
-    return matriculaRepository.save(new Matricula(estudianteId, seccionId));
+@Transactional(timeout = 10)
+void matricular(long estudianteId, long seccionId) {
+    var estudiante = estudiantes.bloquear(estudianteId)...;   // FOR UPDATE, primero
+    var seccion = secciones.bloquear(seccionId)...;           // FOR UPDATE, segundo
+    ... validaciones ...
+    if (seccion.agotada()) throw new CupoNoDisponibleException();
+    matriculas.registrar(estudianteId, seccionId);
+    secciones.ajustarCupo(seccionId, -1);
 }
 ```
 
-**Opción B — Locking optimista (columna de versión)**
-Cada sección tiene una columna `version`. Al confirmar la matrícula, se actualiza condicionando a que la versión no haya cambiado desde la lectura. Si otra transacción ya modificó la fila, la actualización falla y se reintenta o se rechaza.
-
-```java
-@Version
-private Long version;
-```
-
-**Barrera adicional:** independientemente de la estrategia de locking, una restricción `CHECK` en base de datos (`cupo_disponible >= 0`) actúa como última línea de defensa ante cualquier condición no contemplada en el código de aplicación.
+**B — Optimista (columna `version`):** se lee sin bloquear y el `UPDATE` se condiciona a que la versión no haya cambiado; si cambió, se reintenta.
 
 ### 8.3 Comparación y decisión
 
-| Criterio | Pesimista (`FOR UPDATE`) | Optimista (versión) |
+| Criterio | Pesimista | Optimista |
 |---|---|---|
-| Comportamiento bajo alta contención (pico de apertura) | Serializa el acceso; más predecible pero puede generar cola de espera | Menor bloqueo, pero más reintentos fallidos bajo alta contención |
-| Complejidad de implementación | Baja | Media (requiere manejo explícito de reintentos) |
-| Riesgo de interbloqueo | Mayor si se combina con otros locks | Ninguno |
+| Alta contención sobre una misma fila (apertura) | Cola ordenada, sin trabajo desperdiciado | Muchos conflictos y reintentos |
+| Complejidad | Baja | Media (reintentos explícitos) |
+| Interbloqueo | Posible, evitado con orden fijo estudiante → sección | No aplica |
 
-**Decisión implementada:** se usa locking pesimista con `FOR UPDATE`. Las pruebas coordinadas de H2 verifican que el último cupo tenga un solo ganador y que las escrituras del mismo estudiante respeten créditos y horarios. La medición de carga sostenida queda fuera del alcance de este prototipo.
+Se eligió el bloqueo pesimista porque la contención es justamente el escenario del dominio. La espera se acota con los límites de §5.2.
 
 ### 8.4 Prueba reproducible
 
-Se implementa una prueba con `ExecutorService` y `CountDownLatch` que lanza *N* hilos concurrentes intentando matricularse en una sección con un único cupo disponible, y verifica que:
+`ReglasMatriculaTestBase.ultimoCupoTieneUnSoloGanador` usa un `ExecutorService` de 5 hilos y dos `CountDownLatch`: uno espera a que todos los hilos estén listos y el otro los libera a la vez. Cada hilo llama a `service.matricular` en su propia transacción. Verifica que:
 
-1. Exactamente un hilo obtiene la matrícula confirmada.
-2. Los *N-1* hilos restantes reciben `CupoNoDisponibleException`.
-3. El estado final en base de datos es consistente (`matriculados == cupoMaximo`).
+1. Exactamente 1 solicitud se confirma y 4 reciben `MatriculaRechazadaException`.
+2. `cupo_disponible = 0` y existe 1 sola matrícula en la sección.
+3. `cupo_maximo − cupo_disponible` es igual al número de matrículas.
 
-*[completar con el código final de la prueba y su resultado — captura o log de ejecución]*
+Se ejecuta contra H2 y contra PostgreSQL 17 (Testcontainers):
+
+```
+cd Prototipo
+./mvnw test -Dtest='MatriculaService*Test'
+```
 
 ---
 
@@ -288,62 +280,64 @@ Se implementa una prueba con `ExecutorService` y `CountDownLatch` que lanza *N* 
 
 ### 9.1 Dependencia externa simulada
 
-El flujo de matrícula consulta un servicio externo (simulado) de verificación de deudas y situación académica antes de confirmar. Este servicio puede fallar, responder con latencia alta o no estar disponible.
+`VerificadorAcademicoDemo` simula el servicio de verificación académica. Se configura con `VERIFICACION_ACADEMICA_MODO=ok|fallo` y `VERIFICACION_ACADEMICA_LATENCIA=<duración>`.
 
-### 9.2 Mecanismos aplicados (Resilience4j)
+### 9.2 Mecanismos
 
-| Mecanismo | Configuración | Propósito |
-|---|---|---|
-| **Timeout** | 2 s | Evitar que una solicitud de matrícula quede indefinidamente esperando al servicio externo. |
-| **Reintentos con backoff** | 3 intentos, espera de 50 ms | Absorber fallas transitorias de red sin involucrar al usuario. |
-| **Circuit breaker** | Ventana 4, mínimo 4 llamadas, umbral 50 %, apertura 5 s | Si el servicio externo falla reiteradamente, dejar de llamarlo temporalmente y degradar la respuesta en lugar de saturar el sistema con solicitudes que fallarán. |
-| **Fallback** | Rechazo explícito y auditable de la matrícula, con mensaje claro ("no se pudo verificar la situación académica, intente nuevamente") | Evitar tanto confirmar matrículas sin verificación como colgar la solicitud del estudiante. |
+| Mecanismo | Configuración | Propósito | Prueba |
+|---|---|---|---|
+| **Timeout** | 2 s (configurable) | La solicitud no queda colgada si el servicio tarda. | `timeoutSeConvierteEnRechazoControlado` |
+| **Reintentos** | 3 intentos, 50 ms entre ellos | Absorbe fallas transitorias sin involucrar al usuario. | `reintentaFallasTransitoriasYLuegoConfirma` |
+| **Circuit breaker** | Ventana 4, mínimo 4 llamadas, umbral 50 %, abierto 5 s | Ante fallas repetidas deja de llamar al servicio y rechaza de inmediato. | `circuitBreakerAbiertoDejaDeLlamarAlServicioCaido` |
+| **Fallback controlado** | `ServicioExternoNoDisponibleException` → 503 | No se confirma una matrícula sin verificar ni se muestra una traza. | `ServicioExternoCaidoTest` |
+| **Rollback transaccional** | `@Transactional` | Si falla una escritura posterior, matrícula y cupo se revierten juntos. | `retiroHaceRollbackSiFallaLaLiberacionDelCupo` |
 
-### 9.3 Resultado esperado
+### 9.3 Resultado
 
-Ante una falla del servicio externo, el sistema debe: (a) no caerse ni bloquear otras solicitudes de matrícula no relacionadas, (b) responder al estudiante con un mensaje claro y un código HTTP apropiado (503), y (c) registrar el evento para observabilidad.
-
-La prueba `VerificacionAcademicaServiceTest` verifica el reintento y el timeout con un stub determinista. El modo demo se puede cambiar con `VERIFICACION_ACADEMICA_MODO=fallo`; en ese caso se responde 503, no se abre la transacción de matrícula y se registra `evento=verificacion_academica_fallida`. La suite no simula carga sostenida.
+Ante una falla del servicio externo el sistema no se cae, responde 503 con un mensaje claro, no abre la transacción (no consume cupos ni retiene bloqueos) y registra la causa: `timeout`, `servicio_no_disponible` o `circuit_breaker_abierto`.
 
 ---
 
 ## 10. Pruebas y resultados
 
-### 10.1 Estrategia de pruebas
+### 10.1 Estrategia
 
-| Tipo | Herramienta | Qué cubre |
-|---|---|---|
-| Unitarias | JUnit 5 + Mockito | Reglas académicas individuales, mapeo de excepciones. |
-| De contrato | JUnit 5 | Precondiciones/postcondiciones de `MatriculaService`. |
-| De concurrencia | JUnit 5 + `ExecutorService`/`CountDownLatch` | Condición de carrera del último cupo (sección 8.4). |
-| De integración | `@SpringBootTest` + Testcontainers (PostgreSQL) | Flujo completo de matrícula contra una base de datos real. |
-| De resiliencia | Resilience4j test-support / WireMock | Simulación de fallas del servicio externo. |
-| De carga | JMeter / Gatling | Comportamiento bajo un pico simulado de solicitudes concurrentes. |
+| Suite | Tipo | Qué cubre | Casos |
+|---|---|---|---:|
+| `PaginasTest` | MVC (`@SpringBootTest` + MockMvc) | Flujo web completo, parámetros inválidos, 404/400 | 7 |
+| `ServicioExternoCaidoTest` | MVC con verificador en modo `fallo` | 503 de punta a punta sin consumir cupo | 1 |
+| `SeccionTest` | Unitaria | Invariante de cupos del record `Seccion` | 2 |
+| `MatriculaServiceH2Test` | Integración (H2) | Reglas, contratos, rollback y carreras | 12 |
+| `MatriculaServicePostgresTest` | Integración (PostgreSQL 17, Testcontainers) | Las mismas 12 sobre el motor real | 12 |
+| `VerificacionAcademicaServiceTest` | Unitaria con stub | Reintento, timeout y circuit breaker | 3 |
 
 ### 10.2 Resultados
 
-La evidencia automatizada se mantiene en las pruebas H2, la prueba de páginas y `VerificacionAcademicaServiceTest`. No se declara porcentaje de cobertura ni p50/p95/p99 porque todavía no se generó un reporte de cobertura o una prueba de carga.
+`./mvnw clean verify` (Java 21, Docker activo), 23 de octubre de 2026:
+
+```
+Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
+
+Las capturas están en [`docs/evidencias/`](docs/evidencias/). No se generó porcentaje de cobertura ni prueba de carga.
 
 ---
 
 ## 11. Limitaciones y trabajo futuro
 
-### 11.1 Limitaciones conocidas de v1.0
+### 11.1 Limitaciones de v1.0
 
-- El ciclo de vida de la matrícula es simplificado (confirmada/retirada); no implementa aún lista de espera ni fases de matrícula.
-- La configuración de perfiles institucionales no está externalizada todavía (se compone programáticamente); la externalización completa con *feature flags* es trabajo de v2.0.
-- No se incluyen todavía trazas distribuidas, panel de métricas ni prueba de carga sostenida; sí hay logging estructurado de comandos, rechazos y fallas del servicio externo.
-- El servicio de verificación académica es simulado (stub/mock), no una integración real.
+- Selección de estudiante sin autenticación ni CSRF (demo local).
+- La verificación académica es un stub, no una integración real.
+- Esquema inicializado con `schema.sql`, sin migraciones versionadas.
+- Sin prueba de carga, percentiles ni cobertura.
+- Auditoría OWASP pendiente de completar con API key de NVD.
 
-### 11.2 Trabajo previsto para v2.0 (Examen Final)
+### 11.2 Previsto para v2.0
 
-- Máquina de estados *table-driven* completa de la matrícula (solicitada, confirmada, en lista de espera, retirada, rechazada).
-- Configuración externalizada y *feature flags* (por ejemplo, fases de matrícula regular/rezagados, activar o no la lista de espera).
-- Internacionalización de la interfaz y los mensajes.
-- Logs estructurados y métricas expuestas (tasa de rechazo por cupo, tiempo de respuesta, cupos restantes).
-- Contenerización completa con Docker Compose para despliegue de un solo comando.
-- *Baseline*, profiling y optimización de rendimiento bajo carga simulando la hora de apertura real.
-- Refactorización respaldada por pruebas sobre los *code smells* identificados en v1.0.
-- Reingeniería del módulo de asignación de cupos de v1.0, tratado como componente legacy, con pruebas de caracterización previas.
-- Ingeniería reversa de la arquitectura resultante.
-- Publicación formal del repositorio con licencia abierta, README de contribución y al menos dos perfiles institucionales de ejemplo funcionando sobre el mismo núcleo.
+- Reglas académicas intercambiables por institución mediante una interfaz común y perfiles configurables.
+- Máquina de estados de matrícula (solicitada, confirmada, lista de espera, retirada).
+- API REST documentada con OpenAPI, autenticación y CSRF.
+- Migraciones versionadas (Flyway), métricas y prueba de carga del pico de apertura.
+- Integración real con el servicio de verificación académica.

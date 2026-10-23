@@ -29,7 +29,7 @@ También se admiten `DB_URL`, `DB_USER` y `PORT`. El esquema se crea si no exist
 ## Antes de una demostración en vivo
 
 1. `.\mvnw.cmd test` debe terminar sin fallos.
-2. `.\mvnw.cmd -DskipTests package` y ejecutar `java -jar target/seccion-critica-0.1.0-SNAPSHOT.jar`: arranca más rápido que `spring-boot:run` y no depende de Maven.
+2. `.\mvnw.cmd -DskipTests package` y ejecutar `java -jar target/seccion-critica-1.0.0.jar`: arranca más rápido que `spring-boot:run` y no depende de Maven.
 3. Comprobar http://localhost:8080/actuator/health → `{"status":"UP"}`.
 4. Con H2 basta reiniciar la aplicación para volver a los datos iniciales. Con PostgreSQL: `docker compose down -v` y volver a levantar.
 5. Sin internet la página funciona igual: solo cambia la tipografía por la del sistema.
@@ -96,4 +96,4 @@ Para generar el árbol y ejecutar la auditoría bajo demanda:
 
 ## Pendientes
 
-Migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables (`ReglaMatricula`) y métricas de carga. La verificación académica externa ya cuenta con timeout, reintentos y circuit breaker en v1.0. La licencia Apache 2.0 debe formalizarse con un archivo `LICENSE`.
+Migraciones versionadas, autenticación/CSRF, historial con estados, reglas intercambiables (`ReglaMatricula`) y métricas de carga. La verificación académica externa ya cuenta con timeout, reintentos y circuit breaker en v1.0. La licencia Apache 2.0 está en [`LICENSE`](../LICENSE).

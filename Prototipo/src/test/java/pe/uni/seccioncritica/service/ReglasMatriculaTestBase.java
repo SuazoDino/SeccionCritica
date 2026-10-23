@@ -119,6 +119,8 @@ abstract class ReglasMatriculaTestBase {
         assertThrows(RecursoNoEncontradoException.class, () -> service.matricular(999, 4));
         assertThrows(RecursoNoEncontradoException.class, () -> service.matricular(1, 999));
         assertThrows(RecursoNoEncontradoException.class, () -> service.estudiante(999));
+        assertThrows(RecursoNoEncontradoException.class, () -> service.matricular(0, 4));
+        assertThrows(RecursoNoEncontradoException.class, () -> service.retirar(1, -4));
         assertEquals(1, cupos(4));
     }
 

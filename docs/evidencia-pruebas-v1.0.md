@@ -1,6 +1,6 @@
 # Evidencia de pruebas v1.0
 
-La evidencia vigente corresponde a la ejecución real del 22 de octubre de 2026 desde `C:\SeccionCritica\Prototipo`:
+La evidencia vigente corresponde a la ejecución real del 23 de octubre de 2026 desde `Prototipo/` (Java 21, Docker activo):
 
 ```powershell
 .\mvnw.cmd clean verify
@@ -9,16 +9,18 @@ La evidencia vigente corresponde a la ejecución real del 22 de octubre de 2026 
 | Suite | Pruebas |
 |---|---:|
 | `PaginasTest` | 7 |
+| `ServicioExternoCaidoTest` | 1 |
+| `SeccionTest` | 2 |
 | `MatriculaServiceH2Test` | 12 |
 | `MatriculaServicePostgresTest` | 12 |
-| `VerificacionAcademicaServiceTest` | 2 |
-| **Total** | **33** |
+| `VerificacionAcademicaServiceTest` | 3 |
+| **Total** | **37** |
 
-Fallos: **0** · Errores: **0** · Omitidas: **0** · Resultado: **BUILD SUCCESS** · Duración: **22.515 segundos**.
+Fallos: **0** · Errores: **0** · Omitidas: **0** · Resultado: **BUILD SUCCESS** · Duración: **10.5 segundos**.
 
 `MatriculaServicePostgresTest` ejecutó PostgreSQL 17 mediante Testcontainers. Las pruebas de reglas y concurrencia reutilizan [`ReglasMatriculaTestBase`](../Prototipo/src/test/java/pe/uni/seccioncritica/service/ReglasMatriculaTestBase.java), incluyendo el escenario de cinco competidores por la última vacante.
 
-Los XML y TXT de Surefire están en `Prototipo/target/surefire-reports/`. Son artefactos generados y no deben agregarse al repositorio. La guía para obtener capturas está en [guia-evidencias-v1.0.md](./guia-evidencias-v1.0.md).
+Los XML y TXT de Surefire están en `Prototipo/target/surefire-reports/`. Son artefactos generados y no deben agregarse al repositorio. La guía para obtener capturas está en [guia-evidencias-v1.0.md](./Evidencias-v1.0.md).
 
 ## Auditoría OWASP
 

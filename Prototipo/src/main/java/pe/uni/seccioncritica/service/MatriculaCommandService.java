@@ -33,6 +33,18 @@ class MatriculaCommandService {
         this.matriculas = matriculas;
     }
 
+    /**
+     * Contrato de matrícula.
+     * <ul>
+     *   <li><b>Pre:</b> el estudiante y la sección existen; la verificación académica externa ya aprobó.</li>
+     *   <li><b>Post (éxito):</b> existe una única matrícula estudiante–sección y el cupo disponible bajó en 1.</li>
+     *   <li><b>Post (rechazo):</b> se lanza una {@link MatriculaRechazadaException} y la transacción se revierte:
+     *       ni matrícula ni cupo cambian.</li>
+     *   <li><b>Invariantes:</b> {@code 0 <= cupo_disponible <= cupo_maximo}; créditos del estudiante
+     *       {@code <= max_creditos}; sin cruces práctica–práctica. Se preservan porque estudiante y sección
+     *       se bloquean en ese orden con {@code SELECT ... FOR UPDATE}.</li>
+     * </ul>
+     */
     @Transactional(timeout = 10)
     void matricular(long estudianteId, long seccionId) {
         var estudiante = estudiantes.bloquear(estudianteId)
@@ -55,6 +67,14 @@ class MatriculaCommandService {
         secciones.ajustarCupo(seccionId, -1);
     }
 
+    /**
+     * Contrato de retiro.
+     * <ul>
+     *   <li><b>Pre:</b> el estudiante y la sección existen y hay una matrícula activa para el par.</li>
+     *   <li><b>Post (éxito):</b> la matrícula ya no existe y el cupo disponible subió exactamente en 1.</li>
+     *   <li><b>Post (rechazo):</b> un retiro repetido se rechaza sin liberar otro cupo.</li>
+     * </ul>
+     */
     @Transactional(timeout = 10)
     void retirar(long estudianteId, long seccionId) {
         estudiantes.bloquear(estudianteId)

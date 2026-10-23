@@ -12,7 +12,7 @@
 
 Sección Crítica es un prototipo web local para gestionar matrícula con cupos limitados. Resuelve el riesgo de sobrecupos durante solicitudes concurrentes y aplica reglas académicas sobre prerrequisitos, cursos aprobados, créditos y cruces de prácticas.
 
-La versión v1.0 entrega una aplicación Spring Boot con interfaz Thymeleaf, persistencia JDBC sobre H2 y PostgreSQL, transacciones con bloqueo pesimista, manejo centralizado de errores y una frontera de verificación académica simulada con timeout, reintentos y circuit breaker. El resultado comprobado fue una ejecución limpia de 33 pruebas, sin fallos, errores ni omitidas, con PostgreSQL 17 mediante Testcontainers.
+La versión v1.0 entrega una aplicación Spring Boot con interfaz Thymeleaf, persistencia JDBC sobre H2 y PostgreSQL, transacciones con bloqueo pesimista, manejo centralizado de errores y una frontera de verificación académica simulada con timeout, reintentos y circuit breaker. El resultado comprobado fue una ejecución limpia de 37 pruebas, sin fallos, errores ni omitidas, con PostgreSQL 17 mediante Testcontainers.
 
 El sistema permite seleccionar uno de los estudiantes de demostración, consultar la oferta, matricularse, retirarse y visualizar la agenda. La garantía de última vacante se implementa en servidor y base de datos; la pantalla solo muestra una vista informativa del estado.
 
@@ -63,7 +63,7 @@ service: MatriculaService, MatriculaCommandService,
 | H2 | Demo predeterminada y pruebas | Base en memoria |
 | PostgreSQL 17 | Perfil y prueba de integración | Contenedor real de Testcontainers |
 | Docker / Testcontainers | Entorno PostgreSQL reproducible para pruebas | `MatriculaServicePostgresTest` |
-| JUnit 5 y Spring Test | Pruebas MVC, servicio e integración | 33 pruebas comprobadas |
+| JUnit 5 y Spring Test | Pruebas MVC, servicio e integración | 37 pruebas comprobadas |
 | Resilience4j 2.2.0 | Retry y circuit breaker | Protege la verificación académica simulada |
 | Thymeleaf y CSS/JavaScript propio | Interfaz de demostración | Renderiza oferta, errores, agenda y formularios |
 
@@ -101,7 +101,7 @@ El orden de adquisición es estudiante y luego sección. Esto serializa operacio
 
 [`VerificacionAcademicaService`](../Prototipo/src/main/java/pe/uni/seccioncritica/service/VerificacionAcademicaService.java) usa timeout configurable, hasta tres intentos con espera de 50 ms y circuit breaker con ventana de 4 llamadas, mínimo de 4, umbral de fallo de 50% y espera de apertura de 5 s. El rechazo se transforma en `ServicioExternoNoDisponibleException` y el controlador responde 503. La transacción de matrícula comienza después de la verificación, por lo que una falla externa no consume cupos.
 
-El rollback es transaccional: matrícula y ajuste del cupo se revierten juntos si una escritura posterior falla. La prueba específica de rollback está en `ReglasMatriculaTestBase.retiroHaceRollbackSiFallaLaLiberacionDelCupo`. Las pruebas automatizadas verifican reintento y timeout; no existe una prueba específica del estado abierto del circuit breaker.
+El rollback es transaccional: matrícula y ajuste del cupo se revierten juntos si una escritura posterior falla. La prueba específica de rollback está en `ReglasMatriculaTestBase.retiroHaceRollbackSiFallaLaLiberacionDelCupo`. Las pruebas automatizadas verifican reintento, timeout y apertura del circuit breaker (`circuitBreakerAbiertoDejaDeLlamarAlServicioCaido`: tras 4 fallos el circuito se abre y la siguiente solicitud se rechaza sin llamar al servicio). `ServicioExternoCaidoTest` comprueba de punta a punta que con el verificador caído se responde 503 sin consumir cupo.
 
 ## 5. Control de concurrencia
 
@@ -127,17 +127,19 @@ El contrato del código está compuesto por consultas, excepciones de dominio y 
 
 ## 7. Resultados de pruebas
 
-La evidencia vigente corresponde a `C:\SeccionCritica\Prototipo` y al comando `\.\mvnw.cmd clean verify`, ejecutado el 22 de octubre de 2026.
+La evidencia vigente corresponde al comando `mvnw clean verify` desde `Prototipo/`, ejecutado el 23 de octubre de 2026 con Docker activo.
 
 | Suite | Resultado |
 |---|---:|
 | `PaginasTest` | 7 |
+| `ServicioExternoCaidoTest` | 1 |
+| `SeccionTest` | 2 |
 | `MatriculaServiceH2Test` | 12 |
 | `MatriculaServicePostgresTest` | 12 |
-| `VerificacionAcademicaServiceTest` | 2 |
-| Total | **33** |
+| `VerificacionAcademicaServiceTest` | 3 |
+| Total | **37** |
 
-Fallos: **0** · Errores: **0** · Omitidas: **0** · Resultado: **BUILD SUCCESS** · Duración: **22.515 s**. PostgreSQL 17 se ejecutó mediante Testcontainers. Los reportes Surefire existentes están en `Prototipo/target/surefire-reports/`; `target/` no forma parte del entregable.
+Fallos: **0** · Errores: **0** · Omitidas: **0** · Resultado: **BUILD SUCCESS** · Duración: **10.5 s**. PostgreSQL 17 se ejecutó mediante Testcontainers. Los reportes Surefire existentes están en `Prototipo/target/surefire-reports/`; `target/` no forma parte del entregable.
 
 No se generó un porcentaje de cobertura ni una prueba de carga. Por ello no se atribuyen métricas de cobertura o rendimiento.
 
@@ -170,7 +172,6 @@ Limitaciones verificables de v1.0:
 - no hay migraciones versionadas; el esquema se inicializa con SQL;
 - no se midieron carga sostenida, percentiles ni cobertura;
 - la auditoría OWASP quedó pendiente por la actualización incompleta de NVD;
-- la licencia Apache 2.0 está anunciada, pero el repositorio no contiene aún un archivo `LICENSE`.
 
 El trabajo futuro debe priorizar autenticación/CSRF, migraciones, integración real, métricas y pruebas de carga, lista de espera e historial, y completar la auditoría de dependencias. Estas propuestas no forman parte de v1.0.
 
@@ -180,13 +181,13 @@ El trabajo futuro debe priorizar autenticación/CSRF, migraciones, integración 
 |---|---:|---|---|---|---|---|
 | Dependencias y reúso | 10% | Maven, starters, JDBC, Resilience4j, Testcontainers; base de pruebas común | [`pom.xml`](../Prototipo/pom.xml), `ReglasMatriculaTestBase` | árbol Maven con `BUILD SUCCESS` | Cumplido | Auditoría OWASP inconclusa; el análisis de vulnerabilidades queda pendiente |
 | Problemas de runtime | 10% | Bloqueos, timeouts y control de contención | `MatriculaCommandService`, repositorios, propiedades PostgreSQL | `ultimoCupoTieneUnSoloGanador`; pruebas de timeout | Cumplido | No es prueba de carga |
-| Desarrollo por contratos | 15% | Pre/postcondiciones e invariantes operativas | `matricular`, `retirar`, `oferta`, `schema.sql` | reglas, rollback y pruebas de oferta | Cumplido | Contratos documentados; no hay DSL formal de contratos |
+| Desarrollo por contratos | 15% | Pre/postcondiciones e invariantes en código y en SQL | `matricular`, `retirar`, `oferta`, record `Seccion`, `ajustarCupo`, `schema.sql` | reglas, rollback, IDs no positivos y `SeccionTest` | Cumplido | Contratos en Javadoc y validaciones explícitas; no hay DSL formal de contratos |
 | Programación defensiva | 10% | Validación en servidor, IDs inexistentes y errores de entrada | `ManejadorErrores`, `MatriculaController` | `PaginasTest`, 7 pruebas | Cumplido | Sin autenticación/CSRF por ser demo |
 | Excepciones y logging | 15% | Jerarquía de dominio, advice y logging por evento | `exception/*`, `ManejadorErrores`, servicios | `PaginasTest` y pruebas de servicio | Cumplido | No se presentó una métrica de observabilidad |
 | Concurrencia | 15% | `@Transactional`, `SELECT FOR UPDATE`, orden estudiante→sección | `MatriculaCommandService`, repositorios | cinco competidores en H2/PostgreSQL | Cumplido | Verificación focalizada, no carga sostenida |
-| Resiliencia | 15% | Timeout, retry, circuit breaker y rollback | `VerificacionAcademicaService`, comando transaccional | 2 pruebas de verificación; prueba de rollback | Parcial | Retry/timeout/rollback tienen prueba; circuit breaker solo está implementado, no probado específicamente |
-| Pruebas y evidencias | 5% | Suite MVC, H2, PostgreSQL/Testcontainers y resiliencia | cuatro suites | 33, 0 fallos, 0 errores, 0 omitidas | Cumplido | Las capturas de exposición aún deben obtenerse manualmente |
-| Calidad y documentación | 5% | Informe, guías, contratos y análisis de dependencias | `docs/`, `Prototipo/docs/`, READMEs | revisión documental y enlaces relativos | Cumplido | Falta confirmar URL GitHub y cerrar OWASP |
+| Resiliencia | 15% | Timeout, retry, circuit breaker y rollback | `VerificacionAcademicaService`, comando transaccional | 3 pruebas de verificación, `ServicioExternoCaidoTest` (503) y prueba de rollback | Cumplido | Los cuatro mecanismos tienen prueba automatizada |
+| Pruebas y evidencias | 5% | Suite MVC, H2, PostgreSQL/Testcontainers y resiliencia | seis suites | 37, 0 fallos, 0 errores, 0 omitidas | Cumplido | Capturas en `docs/evidencias/` |
+| Calidad y documentación | 5% | Informe, guías, contratos y análisis de dependencias | `docs/`, `Prototipo/docs/`, READMEs | revisión documental y enlaces relativos | Cumplido | Licencia Apache 2.0 en `LICENSE`; OWASP pendiente |
 
 ## 12. Conclusiones
 
