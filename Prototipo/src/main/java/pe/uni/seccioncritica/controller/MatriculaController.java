@@ -3,6 +3,7 @@ package pe.uni.seccioncritica.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.TransientDataAccessException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import pe.uni.seccioncritica.exception.MatriculaRechazadaException;
+import pe.uni.seccioncritica.seguridad.UsuarioSesion;
 import pe.uni.seccioncritica.service.MatriculaService;
 
 @Controller
@@ -21,20 +23,19 @@ public class MatriculaController {
     public MatriculaController(MatriculaService service) { this.service = service; }
 
     @GetMapping("/")
-    public String inicio(Model model) {
-        model.addAttribute("estudiantes", service.estudiantes());
-        return "inicio";
-    }
+    public String inicio() { return "redirect:/oferta"; }
 
     @GetMapping("/oferta")
-    public String oferta(@RequestParam long estudiante, Model model) {
+    public String oferta(@AuthenticationPrincipal UsuarioSesion usuario, Model model) {
+        long estudiante = usuario.estudianteId();
         cargarPanel(estudiante, model, "oferta");
         model.addAttribute("cursos", service.oferta(estudiante));
         return "panel";
     }
 
     @GetMapping("/matriculas")
-    public String matriculas(@RequestParam long estudiante, Model model) {
+    public String matriculas(@AuthenticationPrincipal UsuarioSesion usuario, Model model) {
+        long estudiante = usuario.estudianteId();
         cargarPanel(estudiante, model, "matriculas");
         model.addAttribute("agenda", service.agenda(estudiante));
         model.addAttribute("inscripciones", service.inscripciones(estudiante));
@@ -42,17 +43,21 @@ public class MatriculaController {
     }
 
     @PostMapping("/matricular")
-    public String matricular(@RequestParam long estudiante, @RequestParam long seccion, RedirectAttributes flash) {
+    public String matricular(@AuthenticationPrincipal UsuarioSesion usuario, @RequestParam long seccion,
+                             RedirectAttributes flash) {
+        long estudiante = usuario.estudianteId();
         ejecutar(() -> service.matricular(estudiante, seccion), "matricular", estudiante, seccion,
                 "Matrícula confirmada. Tu vacante está reservada.", flash);
-        return "redirect:/oferta?estudiante=" + estudiante;
+        return "redirect:/oferta";
     }
 
     @PostMapping("/retirar")
-    public String retirar(@RequestParam long estudiante, @RequestParam long seccion, RedirectAttributes flash) {
+    public String retirar(@AuthenticationPrincipal UsuarioSesion usuario, @RequestParam long seccion,
+                          RedirectAttributes flash) {
+        long estudiante = usuario.estudianteId();
         ejecutar(() -> service.retirar(estudiante, seccion), "retirar", estudiante, seccion,
                 "Retiro realizado. La vacante vuelve a estar disponible.", flash);
-        return "redirect:/matriculas?estudiante=" + estudiante;
+        return "redirect:/matriculas";
     }
 
     private void cargarPanel(long estudiante, Model model, String vista) {

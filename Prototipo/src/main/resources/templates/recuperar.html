@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos :: head('Recuperar contraseña', false)}"></head>
+<body>
+<main class="acceso">
+    <section th:replace="~{fragmentos :: marca-acceso}"></section>
+
+    <section class="acceso-panel">
+        <div class="acceso-tarjeta">
+            <a class="volver" th:href="@{/login}">← Volver a iniciar sesión</a>
+            <p class="eyebrow">RECUPERAR ACCESO</p>
+            <h2>¿Olvidaste tu contraseña?</h2>
+
+            <th:block th:if="${enviado}">
+                <div class="alerta exito" role="status">
+                    Si el código está registrado, enviamos un enlace a tu correo institucional.
+                    El enlace vence en 30 minutos y solo puede usarse una vez.
+                </div>
+                <div class="nota" th:if="${enlaceDemo}">
+                    <strong>Modo demostración</strong>
+                    <p>No hay servidor de correo: este es el enlace que recibirías.</p>
+                    <a class="boton" th:href="${enlaceDemo}">Abrir enlace de recuperación ↗</a>
+                </div>
+                <p class="acceso-intro">¿No llegó? Revisa la carpeta de spam o <a th:href="@{/recuperar}">solicita otro enlace</a>.</p>
+            </th:block>
+
+            <th:block th:unless="${enviado}">
+                <p class="acceso-intro">Ingresa tu código de estudiante y te enviaremos un enlace para crear una contraseña nueva.</p>
+                <div class="alerta error" role="alert" th:if="${error}" th:text="${error}"></div>
+                <form class="formulario" method="post" th:action="@{/recuperar}">
+                    <label for="codigo">Código de estudiante</label>
+                    <input id="codigo" name="codigo" autocomplete="username" autocapitalize="characters"
+                           spellcheck="false" placeholder="Ej. 20230001A" required autofocus>
+                    <button type="submit">Enviar enlace</button>
+                </form>
+            </th:block>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package pe.uni.seccioncritica.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,7 +28,7 @@ class ServicioExternoCaidoTest {
 
     @Test
     void verificadorCaidoResponde503SinConsumirCupo() throws Exception {
-        mvc.perform(post("/matricular").param("estudiante", "1").param("seccion", "4"))
+        mvc.perform(post("/matricular").with(PaginasTest.sesion(1)).with(csrf()).param("seccion", "4"))
                 .andExpect(status().isServiceUnavailable());
         assertEquals(1, db.queryForObject("SELECT cupo_disponible FROM seccion WHERE id = 4", Integer.class));
         assertEquals(0, db.queryForObject("SELECT COUNT(*) FROM matricula", Integer.class));

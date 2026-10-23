@@ -23,7 +23,7 @@ Documentación: [`docs/informe-final-v1.0.md`](docs/informe-final-v1.0.md) · [`
 
 ## Stack del prototipo
 
-Java 21 · Spring Boot 4.1 (Web MVC, JDBC, Actuator) · Thymeleaf · H2 (demo) / PostgreSQL 17 · Docker Compose · JUnit 5 + Testcontainers
+Java 21 · Spring Boot 4.1 (Web MVC, Security, JDBC, Actuator) · Thymeleaf · H2 (demo) / PostgreSQL 17 · Docker Compose · JUnit 5 + Testcontainers
 
 Previstos para versiones siguientes: API REST/OpenAPI, autenticación, reglas intercambiables por institución y migraciones versionadas. Resilience4j ya se usa en v1.0 para la frontera de verificación académica.
 
@@ -36,7 +36,7 @@ Set-Location Prototipo
 .\mvnw.cmd spring-boot:run
 ```
 
-Abre http://localhost:8080. Usa H2 en memoria; no requiere base de datos instalada.
+Abre http://localhost:8080 e inicia sesión con una cuenta de prueba (por ejemplo `20230001A` / `Matricula2026`; la pantalla de acceso lista las tres). Usa H2 en memoria; no requiere base de datos instalada.
 
 Con PostgreSQL (requiere Docker):
 

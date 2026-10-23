@@ -51,6 +51,22 @@ CREATE TABLE IF NOT EXISTS sesion (
     CHECK (fin > inicio)
 );
 
+-- Acceso: el estudiante inicia sesión con su código; la contraseña se guarda solo como hash BCrypt.
+CREATE TABLE IF NOT EXISTS cuenta (
+    estudiante_id BIGINT PRIMARY KEY REFERENCES estudiante (id),
+    correo        VARCHAR(120) NOT NULL UNIQUE,
+    clave_hash    VARCHAR(100) NOT NULL
+);
+
+-- Enlaces de recuperación de contraseña: se guarda el SHA-256 del token, nunca el token.
+CREATE TABLE IF NOT EXISTS recuperacion (
+    token_hash    CHAR(64)                 PRIMARY KEY,
+    estudiante_id BIGINT                   NOT NULL REFERENCES estudiante (id),
+    expira        TIMESTAMP WITH TIME ZONE NOT NULL,
+    usado         BOOLEAN                  NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_recuperacion_estudiante ON recuperacion (estudiante_id);
 CREATE INDEX IF NOT EXISTS idx_seccion_curso ON seccion (curso_id);
 CREATE INDEX IF NOT EXISTS idx_sesion_seccion ON sesion (seccion_id);
 CREATE INDEX IF NOT EXISTS idx_matricula_seccion ON matricula (seccion_id);

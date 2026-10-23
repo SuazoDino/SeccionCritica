@@ -13,10 +13,22 @@
         <link rel="stylesheet" th:href="@{/matricula.css}">
         <script th:src="@{/matricula.js}" defer></script>
     </th:block>
+    <script th:unless="${panel}" th:src="@{/acceso.js}" defer></script>
 </head>
 <body>
 <header th:fragment="marca">
     <a class="marca" th:href="@{/}">SC<span>Sección Crítica</span></a>
 </header>
+
+<!-- Panel de marca de las pantallas de acceso (login, recuperar y restablecer). -->
+<section th:fragment="marca-acceso" class="acceso-marca">
+    <a class="marca" th:href="@{/login}">SC<span>Sección Crítica</span></a>
+    <div>
+        <p class="eyebrow">MATRÍCULA 2026-II</p>
+        <h1>Tu vacante,<br>sin sobrecupos.</h1>
+        <p>Consulta la oferta académica, organiza tu horario y asegura tu sección en tiempo real.</p>
+    </div>
+    <small>UNI · Construcción de Software II</small>
+</section>
 </body>
 </html>
