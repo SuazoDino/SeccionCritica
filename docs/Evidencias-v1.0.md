@@ -8,7 +8,7 @@
 | 4 | `04-retiro-libera-cupo.png` | Retiro confirmado y vacante disponible | Contratos / transacciones |
 | 5 | `05-reglas-academicas.png` | Prerrequisito, cruce horario o límite de créditos | Contratos / programación defensiva |
 | 6 | `06-cinco-competidores.png` | Consola o reporte de `ultimoCupoTieneUnSoloGanador` | Concurrencia |
-| 7 | `07-33-pruebas-build-success.png` | Resumen completo de las seis suites y `BUILD SUCCESS` | Pruebas y evidencias |
+| 7 | `07-37-pruebas-build-success.png` | Resumen completo de las seis suites y `BUILD SUCCESS` | Pruebas y evidencias |
 | 8 | `08-postgresql-testcontainers.png` | Contenedor `postgres:17` y salida de la suite PostgreSQL | Pruebas / dependencias |
 | 9 | `09-arbol-dependencias.png` | Consola con `BUILD SUCCESS` y/o archivo de árbol | Dependencias y reúso |
 
@@ -56,7 +56,7 @@ La ejecución de la suite v1.0 terminó con 37 pruebas, sin fallos, errores ni o
 
 El resultado registrado fue `BUILD SUCCESS`.
 
-![37 pruebas exitosas](evidencias/07-33-pruebas-build-success.png)
+![37 pruebas exitosas](evidencias/07-37-pruebas-build-success.png)
 
 ### Evidencia 08. Pruebas de integración con PostgreSQL
 
