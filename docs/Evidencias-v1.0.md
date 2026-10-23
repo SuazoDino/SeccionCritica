@@ -11,6 +11,7 @@
 | 7 | `07-37-pruebas-build-success.png` | Resumen completo de las seis suites y `BUILD SUCCESS` | Pruebas y evidencias |
 | 8 | `08-postgresql-testcontainers.png` | Contenedor `postgres:17` y salida de la suite PostgreSQL | Pruebas / dependencias |
 | 9 | `09-arbol-dependencias.png` | Consola con `BUILD SUCCESS` y/o archivo de árbol | Dependencias y reúso |
+| 10 | `10-dependabot-sin-alertas.png` | Dependabot activo en GitHub sin alertas abiertas | Dependencias y reúso |
 
 ### Evidencia 01. Aplicación funcionando
 
@@ -73,3 +74,11 @@ Se muestra el árbol de dependencias Maven generado para la versión v1.0.
 El comando terminó correctamente con `BUILD SUCCESS` y generó el archivo `target/dependency-tree.txt`.
 
 ![Árbol de dependencias](evidencias/09-arbol-dependencias.png)
+
+### Evidencia 10. Dependabot sin alertas
+
+Se activaron las alertas de Dependabot en el repositorio de GitHub. El análisis del `pom.xml` terminó sin alertas abiertas ni cerradas.
+
+Para Maven, GitHub analiza las dependencias declaradas en `pom.xml` (directas); las transitivas se revisan con el árbol de la evidencia 09.
+
+![Dependabot sin alertas](evidencias/10-dependabot-sin-alertas.png)

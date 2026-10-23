@@ -44,6 +44,10 @@ El `pom.xml` configura `org.owasp:dependency-check-maven:12.1.0` bajo demanda, c
 
 La actualización NVD informó 413,340 registros, descargó 10,000 (aproximadamente 2%), mostró reintentos y no utilizó API key. La auditoría quedó inconclusa. No se afirma ausencia de vulnerabilidades ni se presenta un inventario CVE.
 
+## Dependabot (GitHub)
+
+El 23 de octubre de 2026 se activaron las alertas de Dependabot en el repositorio. El análisis terminó con **0 alertas** sobre las 16 dependencias declaradas en `pom.xml`. GitHub no resuelve el árbol transitivo de Maven sin un flujo de envío de dependencias, por lo que este resultado cubre las directas; las transitivas siguen documentadas con `dependency:tree`. Evidencia: `docs/evidencias/10-dependabot-sin-alertas.png`.
+
 ## Límites
 
 - El árbol de dependencias sí fue generado con éxito.

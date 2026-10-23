@@ -160,7 +160,9 @@ Riesgos a gestionar: la superficie transitiva de web, logging, Jackson, JDBC y D
 
 Se ejecutó OWASP Dependency-Check **12.1.0** bajo demanda. La actualización de NVD informó **413,340 registros**, descargó **10,000** (aproximadamente 2%), mostró reintentos de solicitud y no utilizó API key. La actualización quedó inconclusa; por tanto, no existe un inventario concluyente de CVE y no se afirma que haya cero vulnerabilidades.
 
-La auditoría queda pendiente. Debe repetirse con una API key o con tiempo suficiente para completar NVD y conservar los informes HTML/JSON resultantes en `target/` sin agregarlos al repositorio.
+Como verificación complementaria se activaron las alertas de Dependabot en GitHub: **0 alertas** sobre las dependencias declaradas en `pom.xml` (evidencia 10). Esto cubre las directas, no el árbol transitivo completo.
+
+La auditoría OWASP queda pendiente. Debe repetirse con una API key o con tiempo suficiente para completar NVD y conservar los informes HTML/JSON resultantes en `target/` sin agregarlos al repositorio.
 
 ## 10. Limitaciones y trabajo futuro
 
