@@ -13,13 +13,13 @@ Motor de matrícula de código abierto con control de cupos concurrentes.
 | Nombre completo | Código |
 |---|---|
 | **Suazo Zanabria Dino** | *20231324K* |
-| **Chavez Oliva Carlos** | *20230131G* |
+| **Chavez Oliva Carlos** | *20232622e* |
 
 ## Descripción
 
 Durante la apertura de matrícula, miles de estudiantes compiten por cupos limitados. Sin control de concurrencia se generan sobrecupos, cruces de horario y caídas del sistema. **Sección Crítica** resuelve ese núcleo (cupos, concurrencia, reglas académicas, resiliencia) de forma configurable para distintas instituciones.
 
-Documentación: [`docs/informe-final-v1.0.md`](docs/informe-final-v1.0.md) · [`docs/guia-demostracion-v1.0.md`](docs/guia-demostracion-v1.0.md) · [`docs/guia-evidencias-v1.0.md`](docs/guia-evidencias-v1.0.md) · [`Prototipo/README-prototipo.md`](Prototipo/README-prototipo.md)
+Documentación: [`docs/informe-final-v1.0.md`](docs/informe-final-v1.0.md) · [`docs/Demostracion-v1.0.md`](docs/Demostracion-v1.0.md) · [`docs/Evidencias-v1.0.md`](docs/Evidencias-v1.0.md) · [`Prototipo/README-prototipo.md`](Prototipo/README-prototipo.md)
 
 ## Stack del prototipo
 
@@ -83,8 +83,8 @@ La evidencia v1.0 comprobada incluye PostgreSQL 17 mediante Testcontainers; Dock
 ## Documentación técnica
 
 - [`docs/informe-final-v1.0.md`](docs/informe-final-v1.0.md): informe académico consolidado y matriz de rúbrica.
-- [`docs/guia-demostracion-v1.0.md`](docs/guia-demostracion-v1.0.md): pasos de exposición y comandos PowerShell.
-- [`docs/guia-evidencias-v1.0.md`](docs/guia-evidencias-v1.0.md): capturas que aún deben obtenerse manualmente.
+- [`docs/Demostracion-v1.0.md`](docs/Demostracion-v1.0.md): pasos de exposición y comandos PowerShell.
+- [`docs/Evidencias-v1.0.md`](docs/Evidencias-v1.0.md): capturas que aún deben obtenerse manualmente.
 - [`docs/evidencia-pruebas-v1.0.md`](docs/evidencia-pruebas-v1.0.md): resultado comprobado de pruebas.
 - [`Prototipo/docs/analisis-dependencias.md`](Prototipo/docs/analisis-dependencias.md): árbol Maven y auditoría OWASP.
 - [`Prototipo/docs/contratos-matricula-y-concurrencia.md`](Prototipo/docs/contratos-matricula-y-concurrencia.md): contratos y concurrencia.
